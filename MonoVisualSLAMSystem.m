@@ -54,14 +54,13 @@ classdef MonoVisualSLAMSystem < matlab.System
                     obj.Pose = p.A;
                     %%RECEPTION OPTITRACK 
                     % % Load ground truth from the downloaded data
-                    gTruthFileName = dataFolder+"rgbd_dataset_freiburg3_long_office_household/groundtruth.txt";%a modifier
-                    gTruth = helperImportGroundTruth(gTruthFileName,imds);%a modifier
+                    %gTruth = helperImportGroundTruth(gTruthFileName,imds);%a modifier
 
                     %%RMSE/Groundtruth 
                      % Compute the scale between the estimated camera trajectory and 
                     % the actual camera trajectory
                     estimatedLocations = vertcat(p.Translation); %position estimer slam
-                    actualLocations = vertcat(gTruth(viewIds).Translation);%%position groundtruth
+                    actualLocations = vertcat('m4X4optitrack'.Translation);%%position groundtruth
                     scale = median(vecnorm(actualLocations,2,2))/ median(vecnorm(estimatedLocations,2,2));
                     scaledEstimate = estimatedLocations * scale;
 
