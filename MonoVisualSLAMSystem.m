@@ -49,7 +49,7 @@ classdef MonoVisualSLAMSystem < matlab.System
             while ~isDone(obj.VslamObj)
                 if hasNewKeyFrame(obj.VslamObj)
                     plot(obj.VslamObj);
-                    [camPoses,viewIds] = poses(obj.VslamObj);
+                    [camPoses,~] = poses(obj.VslamObj);
                     p = camPoses(end);
                     obj.Pose = p.A;
                     %%RECEPTION OPTITRACK 
