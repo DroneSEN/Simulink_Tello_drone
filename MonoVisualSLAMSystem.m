@@ -42,7 +42,7 @@ classdef MonoVisualSLAMSystem < matlab.System
             obj.Pose = eye(4);
         end
 
-        function [pose ,isTrackingLost,xyzPoints,rmse] = stepImpl(obj, I) %[pose, isTrackingLost] = 
+        function [pose ,isTrackingLost,xyzPoints] = stepImpl(obj, I) %[pose, isTrackingLost] = 
             % Implement algorithm. Calculate y as a function of input u and
             % discrete states.
             addFrame(obj.VslamObj,I);
@@ -52,26 +52,6 @@ classdef MonoVisualSLAMSystem < matlab.System
                     [camPoses,~] = poses(obj.VslamObj);
                     p = camPoses(end);
                     obj.Pose = p.A;
-                    %%RECEPTION OPTITRACK 
-                    % % Load ground truth from the downloaded data
-                    %gTruth = helperImportGroundTruth(gTruthFileName,imds);%a modifier
-
-                    %%RMSE/Groundtruth 
-                     % Compute the scale between the estimated camera trajectory and 
-                    % the actual camera trajectory
-                    estimatedLocations = vertcat(p.Translation); %position estimer slam
-                    actualLocations = vertcat('m4X4optitrack'.Translation);%%position groundtruth
-                    scale = median(vecnorm(actualLocations,2,2))/ median(vecnorm(estimatedLocations,2,2));
-                    scaledEstimate = estimatedLocations * scale;
-
-                    % Compute the RMSE of the trajectory estimates
-                    rmse = sqrt(mean( sum((scaledEstimate - actualLocations).^2, 2) ));%erreur estimer/truth
-
-                    % Plot the ground truth trajectory at the scale of the estimated trajectory
-                    actualLocations = actualLocations/scale;
-                    hold(ax,"on");
-                    plot3(ax,actualLocations(:,1),actualLocations(:,2),actualLocations(:,3),...
-                        Color="g",LineWidth=2);
                 end
             end
             pose = obj.Pose;
@@ -105,37 +85,32 @@ classdef MonoVisualSLAMSystem < matlab.System
         %     flag = false;
         % end
 
-        function [out1,out2,out3,out4] = getOutputSizeImpl(obj)
+        function [out1,out2,out3] = getOutputSizeImpl(obj)
             % Return size for each output port
             out1 = [4 4];
             out2 = [1 1];
             out3 = [10000 3]; % La première dimension est variable, la seconde est fixée à 3
-            out4 = [4 4];
         end
 
-        function [out1,out2,out3,out4] = getOutputDataTypeImpl(obj)
+        function [out1,out2,out3] = getOutputDataTypeImpl(obj)
             % Return data type for each output port
             out1 = 'double';
             out2 = 'boolean';
             out3 = 'double';
-            out4 = 'double';
         end
 
-        function [out1, out2,out3,out4] = isOutputComplexImpl(obj)
+        function [out1, out2,out3] = isOutputComplexImpl(obj)
             % Return true for each output port with complex data
             out1 = false;
             out2 = false;
             out3 = false;
-            out4 = false;
         end
 
-        function [out1,out2,out3,out4] = isOutputFixedSizeImpl(obj)
+        function [out1,out2,out3] = isOutputFixedSizeImpl(obj)
             % Return true for each output port with fixed size
             out1 = true;
             out2 = true;
             out3 = false;
-            out4 = true;
-
         end
 
         function [name1] = getInputNamesImpl(obj)
@@ -143,12 +118,11 @@ classdef MonoVisualSLAMSystem < matlab.System
             name1 = 'Image';
         end
 
-        function [name1, name2,name3,name4] = getOutputNamesImpl(obj)
+        function [name1, name2,name3] = getOutputNamesImpl(obj)
             % Return output port names for System block
             name1 = 'Camera Pose';
             name2 = 'Tracking Lost';
             name3 = 'XYZmappoints';
-            name4 = 'RMSE';
         end
     end
 

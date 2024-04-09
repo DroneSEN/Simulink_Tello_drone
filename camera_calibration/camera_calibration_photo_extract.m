@@ -1,6 +1,8 @@
+clear Tello
+
 Tello = ryze("Tello");
 TelloCamera = camera(Tello);
-ImageFolder ='\Camera_calibration_img';
+ImageFolder ='/Bureau/9BA074/';
 
 
 for k=1:30
