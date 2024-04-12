@@ -48,7 +48,7 @@ classdef MonoVisualSLAMSystem < matlab.System
             addFrame(obj.VslamObj,I);
             while ~isDone(obj.VslamObj)
                 if hasNewKeyFrame(obj.VslamObj)
-                    plot(obj.VslamObj);
+                    %plot(obj.VslamObj);
                     [camPoses,~] = poses(obj.VslamObj);
                     p = camPoses(end);
                     obj.Pose = p.A;
@@ -89,7 +89,7 @@ classdef MonoVisualSLAMSystem < matlab.System
             % Return size for each output port
             out1 = [4 4];
             out2 = [1 1];
-            out3 = [10000 3]; % La première dimension est variable, la seconde est fixée à 3
+            out3 = [100000  3]; % La première dimension est variable, la seconde est fixée à 3
         end
 
         function [out1,out2,out3] = getOutputDataTypeImpl(obj)
