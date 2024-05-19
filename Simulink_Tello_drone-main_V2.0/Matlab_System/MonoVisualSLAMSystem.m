@@ -1,145 +1,131 @@
-% MonoVisualSLAMSystem Monocular visual SLAM algorithm
-%
-%   This is an example helper function that is subject to change or removal 
-%   in future releases.
-
-%   Copyright 2021-2022 The MathWorks, Inc.
-
 classdef MonoVisualSLAMSystem < matlab.System
+    % MonoVisualSLAMSystem Algorithme de SLAM visuel monoculaire
+    %
+    % Cette classe est un exemple de fonction d'aide et peut être modifiée
+    % ou supprimée dans les futures versions.
 
-    % Public, non-tunable properties
+    % Propriétés publiques, non modifiables
     properties(Nontunable)
-        %FocalLength Camera focal length
-        FocalLength = [366.7411 362.9497 ];
-        %PrincipalPoint Camera focal center
-        PrincipalPoint = [ 252.67 206.61 ];
-        %ImageSize Image size
-        ImageSize = [ 360, 480 ];
+        % FocalLength Longueur focale de la caméra
+        FocalLength = [366.7411, 362.9497];
+        % PrincipalPoint Centre principal de la caméra
+        PrincipalPoint = [252.67, 206.61];
+        % ImageSize Taille de l'image
+        ImageSize = [360, 480];
     end
 
-    % Pre-computed constants
+    % Constantes pré-calculées
     properties(Access = private)
-        VslamObj
-        Pose (4,4) double
+        VslamObj     % Objet SLAM visuel
+        Pose (4,4) double % Matrice de pose de la caméra
     end
 
     methods
-        % Constructor
+        % Constructeur
         function obj = MonoVisualSLAMSystem(varargin)
-            % Support name-value pair arguments when constructing object
-            setProperties(obj,nargin,varargin{:})
+            % Supporte les arguments de type name-value lors de la construction de l'objet
+            setProperties(obj, nargin, varargin{:});
         end
     end
 
     methods(Access = protected)
-        %% Common functions
+        %% Fonctions communes
         function setupImpl(obj)
-            % Perform one-time calculations, such as computing constants
+            % Effectue les calculs nécessaires une seule fois, tels que le calcul des constantes
             intrinsics = cameraIntrinsics(obj.FocalLength, obj.PrincipalPoint, obj.ImageSize);
             numPoints = 3000;
             numSkipFrames = 5;
-            obj.VslamObj = monovslam(intrinsics,MaxNumPoints=numPoints,SkipMaxFrames=numSkipFrames);
-            obj.Pose = eye(4);
+            obj.VslamObj = monovslam(intrinsics, MaxNumPoints=numPoints, SkipMaxFrames=numSkipFrames);
+            obj.Pose = eye(4); % Initialisation de la matrice de pose
         end
 
-        function [pose ,isTrackingLost,xyzPoints] = stepImpl(obj, I) %[pose, isTrackingLost] = 
-            % Implement algorithm. Calculate y as a function of input u and
-            % discrete states.
-            addFrame(obj.VslamObj,I);
+        function [pose, isTrackingLost, xyzPoints] = stepImpl(obj, I)
+            % Implémente l'algorithme. Calcule la pose en fonction de l'image d'entrée I.
+            addFrame(obj.VslamObj, I);
             while ~isDone(obj.VslamObj)
                 if hasNewKeyFrame(obj.VslamObj)
-                    % plot(obj.VslamObj);
-                    [camPoses,~] = poses(obj.VslamObj);
+                    [camPoses, ~] = poses(obj.VslamObj);
                     p = camPoses(end);
                     obj.Pose = p.A;
                 end
             end
             pose = obj.Pose;
-            isTrackingLost =~ uint8(checkStatus(obj.VslamObj));
+            isTrackingLost = ~uint8(checkStatus(obj.VslamObj));
             xyzPoints = mapPoints(obj.VslamObj);
-          
         end
 
         function resetImpl(obj)
-            % Initialize / reset discrete-state properties
+            % Réinitialise les propriétés discrètes
+            obj.Pose = eye(4);
         end
 
-        %% Backup/restore functions
+        %% Fonctions de sauvegarde/restauration
         function s = saveObjectImpl(obj)
+            % Sauvegarde l'objet
             s = saveObjectImpl@matlab.System(obj);
         end
 
-        function loadObjectImpl(obj,s,wasLocked)
-            loadObjectImpl@matlab.System(obj,s,wasLocked);
-        end
-       
-        %% Simulink functions
-        % function ds = getDiscreteStateImpl(obj)
-        %     % Return structure of properties with DiscreteState attribute
-        %     ds = struct([]);
-        % end
-
-        % function flag = isInputSizeMutableImpl(obj,index)
-        %     % Return false if input size cannot change
-        %     % between calls to the System object
-        %     flag = false;
-        % end
-
-        function [out1,out2,out3] = getOutputSizeImpl(obj)
-            % Return size for each output port
-            out1 = [4 4];
-            out2 = [1 1];
-            out3 = [100000  3]; % La première dimension est variable, la seconde est fixée à 3
+        function loadObjectImpl(obj, s, wasLocked)
+            % Charge l'objet
+            loadObjectImpl@matlab.System(obj, s, wasLocked);
         end
 
-        function [out1,out2,out3] = getOutputDataTypeImpl(obj)
-            % Return data type for each output port
+        %% Fonctions Simulink
+        function [out1, out2, out3] = getOutputSizeImpl(obj)
+            % Retourne la taille pour chaque port de sortie
+            out1 = [4, 4];
+            out2 = [1, 1];
+            out3 = [100000, 3]; % La première dimension est variable, la seconde est fixée à 3
+        end
+
+        function [out1, out2, out3] = getOutputDataTypeImpl(obj)
+            % Retourne le type de données pour chaque port de sortie
             out1 = 'double';
             out2 = 'boolean';
             out3 = 'double';
         end
 
-        function [out1, out2,out3] = isOutputComplexImpl(obj)
-            % Return true for each output port with complex data
+        function [out1, out2, out3] = isOutputComplexImpl(obj)
+            % Retourne false pour chaque port de sortie avec des données non complexes
             out1 = false;
             out2 = false;
             out3 = false;
         end
 
-        function [out1,out2,out3] = isOutputFixedSizeImpl(obj)
-            % Return true for each output port with fixed size
+        function [out1, out2, out3] = isOutputFixedSizeImpl(obj)
+            % Retourne true pour chaque port de sortie avec une taille fixe, sauf pour out3
             out1 = true;
             out2 = true;
             out3 = false;
         end
 
-        function [name1] = getInputNamesImpl(obj)
-            % Return input port names for System block
+        function name1 = getInputNamesImpl(obj)
+            % Retourne le nom du port d'entrée pour le bloc System
             name1 = 'Image';
         end
 
-        function [name1, name2,name3] = getOutputNamesImpl(obj)
-            % Return output port names for System block
+        function [name1, name2, name3] = getOutputNamesImpl(obj)
+            % Retourne les noms des ports de sortie pour le bloc System
             name1 = 'Camera Pose';
             name2 = 'Tracking Lost';
-            name3 = 'XYZmappoints';
+            name3 = 'XYZ Points';
         end
     end
 
     methods(Static, Access = protected)
-        %% Simulink customization functions
+        %% Fonctions de personnalisation Simulink
         % function header = getHeaderImpl
-        %     % Define header panel for System block dialog
+        %     % Définir le panneau d'en-tête pour la boîte de dialogue du bloc System
         %     header = matlab.system.display.Header(mfilename("class"));
         % end
 
         % function group = getPropertyGroupsImpl
-        %     % Define property section(s) for System block dialog
+        %     % Définir la ou les sections de propriétés pour la boîte de dialogue du bloc System
         %     group = matlab.system.display.Section(mfilename("class"));
         % end
 
         % function flag = showSimulateUsingImpl
-        %     % Return false if simulation mode hidden in System block dialog
+        %     % Retourne false si le mode de simulation est masqué dans la boîte de dialogue du bloc System
         %     flag = true;
         % end
     end

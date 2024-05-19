@@ -1,95 +1,86 @@
 classdef Tello_drone_control < matlab.System
-    % TelloDrone Use this block to connect to the drone
+    % Tello_drone_control Utilisez ce bloc pour connecter et contrôler le drone Tello.
     %
-    % This template includes the minimum set of functions required
-    % to define a System object.
+    % Cette classe inclut l'ensemble minimal de fonctions nécessaires
+    % pour définir un objet System.
 
-    % Public, tunable properopenopeties
+    % Propriétés publiques et modifiables
     properties
         droneIP = '127.0.0.1';
     end
 
-
+    % Propriétés privées
     properties (Access = private)
-
-        drone;
-        cam;
-        img;
-        hasTakenOff;
+        drone;          % Objet drone
+        cam;            % Caméra du drone
+        img;            % Image capturée
+        hasTakenOff;    % Statut du décollage
     end
 
     methods (Access = protected)
         function setupImpl(obj)
-            % Connectez-vous à la caméra du drone
-            if isempty(obj.droneIP)
-                obj.drone = ryze("Tello");
-            else
-                obj.drone = ryze("Tello");
-            end
+            % Initialisez la connexion avec le drone et la caméra
+            obj.drone = ryze("Tello");
             obj.cam = camera(obj.drone);
-            obj.img = zeros(720,960,3,'uint8');
-            obj.hasTakenOff = false; % Initialisation de hasTakenOff
+            obj.img = zeros(720, 960, 3, 'uint8');
+            obj.hasTakenOff = false; % Initialisation du statut de décollage
         end
 
-
         function [imgresize, Eulerangles, speedXYZ] = stepImpl(obj, Slam, tkoff, landing, xMove, yMove, zMove, degree, movexyz, moverotate)
-            % Capturez l'image uniquement lorsque le commutateur est activé
+            % Capturez l'image si le commutateur Slam est activé
+            image = snapshot(obj.cam);
             if Slam == 1
-                image = snapshot(obj.cam);
-                imgresize = imresize(image, 0.5);
-                if isempty(image)
-                    imgresize = obj.imgresize;
-                else
-                    obj.img = imgresize;
+                if ~isempty(image)
+                    obj.img = image;
                 end
-            else
-                imgresize = obj.img; % Retournez l'image précédente si le commutateur est désactivé
             end
-            
-            
-            % Vérifiez si la commande de décollage est activée
-            if tkoff == 1 && ~obj.hasTakenOff % Assurez-vous que le drone n'a pas encore décollé
+            imgresize = obj.img;
+
+            % Gestion du décollage
+            if tkoff == 1 && ~obj.hasTakenOff
                 takeoff(obj.drone, "WaitUntilDone", false);
-                obj.hasTakenOff = true; % Mettez à jour le statut du décollage
+                obj.hasTakenOff = true;
             end
 
-            % Vérifiez si la commande d'atterrissage est activée
-            if landing == 1 && obj.hasTakenOff % Assurez-vous que le drone n'a pas encore atterri
+            % Gestion de l'atterrissage
+            if landing == 1 && obj.hasTakenOff
                 land(obj.drone, "WaitUntilDone", false);
-                obj.hasTakenOff = false; % Mettez à jour le statut de l'atterrissage
+                obj.hasTakenOff = false;
             end
-            
-            % Contrôlez le drone avec les valeurs de déplacement fournies
+
+            % Déplacement du drone
             if movexyz == 1 
                 moveValues = [xMove, yMove, zMove];
-                move(obj.drone, moveValues, "WaitUntilDone", false); 
+                move(obj.drone, moveValues, "WaitUntilDone", false);
             end
 
+            % Rotation du drone
             if moverotate == 1
-                rotatevalues = degree;
-                turn(obj.drone,deg2rad(rotatevalues), "WaitUntilDone", false);
+                turn(obj.drone, deg2rad(degree), "WaitUntilDone", false);
             end
-                
+
+            % Lecture des angles d'Euler et de la vitesse
             [Eulerangles, ~] = readOrientation(obj.drone);
-            [speedXYZ,~] = readSpeed(obj.drone);
+            [speedXYZ, ~] = readSpeed(obj.drone);
         end
 
         function resetImpl(obj)
             % Réinitialisez les propriétés internes
+            obj.hasTakenOff = false;
         end
 
         function releaseImpl(obj)
-            % Fermez la connexion à la caméra du drone
+            % Fermez la connexion à la caméra et au drone
             clear obj.cam;
             clear obj.drone;
         end
 
-        %% Simulink functions
+        %% Fonctions Simulink
         function [out1, out2, out3] = getOutputSizeImpl(obj)
             % Retourne la taille pour chaque port de sortie
-            out1= [360 480 3];
-            out2 = [1 3]; % 3 valeurs d'angles ZYX
-            out3 = [1 3]; % 3 valeurs vitesse XYZ
+            out1 = [720, 960, 3];
+            out2 = [1, 3]; % Angles ZYX
+            out3 = [1, 3]; % Vitesse XYZ
         end
 
         function [out1, out2, out3] = getOutputDataTypeImpl(obj)
@@ -100,7 +91,7 @@ classdef Tello_drone_control < matlab.System
         end
 
         function [out1, out2, out3] = isOutputComplexImpl(obj)
-            % Retourne true pour chaque port de sortie avec des données complexes
+            % Retourne false pour chaque port de sortie avec des données non complexes
             out1 = false;
             out2 = false;
             out3 = false;
@@ -115,7 +106,7 @@ classdef Tello_drone_control < matlab.System
 
         function num = getNumInputsImpl(obj)
             % Définissez le nombre d'entrées du système
-            num = 9; % Le commutateur, takeoff, land et les valeurs de déplacement en entrée
+            num = 9; % Slam, takeoff, land et les valeurs de déplacement
         end
     end
 end
