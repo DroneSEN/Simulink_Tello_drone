@@ -73,7 +73,7 @@ classdef ArucoMarkerDetection < matlab.System & matlab.system.mixin.Propagates
         
         function [outputImage, cameraPositions_metre_XYZ] = getOutputSizeImpl(obj)
             % Return size for each output port
-            outputImage = [720, 1280, 3];
+            outputImage = [720, 960, 3];
             cameraPositions_metre_XYZ = [obj.maxMarkers, 3];  % Fixed size array for positions
         end
         
