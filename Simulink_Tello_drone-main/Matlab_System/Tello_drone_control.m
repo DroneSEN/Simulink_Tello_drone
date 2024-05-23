@@ -6,7 +6,7 @@ classdef Tello_drone_control < matlab.System
 
     % Propriétés publiques et modifiables
     properties
-        droneIP = '127.0.0.1';
+        droneIP = "127.0.0.1";
     end
 
     % Propriétés privées
@@ -15,18 +15,23 @@ classdef Tello_drone_control < matlab.System
         cam;            % Caméra du drone
         img;            % Image capturée
         hasTakenOff;    % Statut du décollage
+        previousRcEnabled = 0; % Flag pour détecter un front montant/descendant sur le RC Enabled
     end
 
     methods (Access = protected)
         function setupImpl(obj)
             % Initialisez la connexion avec le drone et la caméra
-            obj.drone = ryze("Tello");
+            if obj.droneIP == "127.0.0.1" || isempty(obj.droneIP)
+                obj.drone = ryze("Tello");
+            else
+                obj.drone = ryze(obj.droneIP);
+            end
             obj.cam = camera(obj.drone);
             obj.img = zeros(720, 960, 3, 'uint8');
             obj.hasTakenOff = false; % Initialisation du statut de décollage
         end
 
-        function [imgresize, Eulerangles, speedXYZ] = stepImpl(obj, Slam, tkoff, landing, xMove, yMove, zMove, degree, movexyz, moverotate)
+        function [imgresize, Eulerangles, speedXYZ, accelXYZ] = stepImpl(obj, Slam, tkoff, landing, xMove, yMove, zMove, degree, movexyz, moverotate, enableRC, rcspeeds)
             % Capturez l'image si le commutateur Slam est activé
             image = snapshot(obj.cam);
             if Slam == 1
@@ -59,9 +64,25 @@ classdef Tello_drone_control < matlab.System
                 turn(obj.drone, deg2rad(degree), "WaitUntilDone", false);
             end
 
+            % Commande RC
+            if enableRC == 1
+                rc(obj.drone, rcspeeds(2), rcspeeds(1), rcspeeds(3), rcspeeds(4));
+            end
+
+            % Envoie d'une commande RC (0,0,0,0) lorsque l'on désactive le
+            % RC
+            if enableRC == 0 && obj.previousRcEnabled == 1
+                rc(obj.drone, 0, 0, 0, 0);
+            end
+
             % Lecture des angles d'Euler et de la vitesse
             [Eulerangles, ~] = readOrientation(obj.drone);
             [speedXYZ, ~] = readSpeed(obj.drone);
+
+            [accelXYZ, ~] = readAccel(obj.drone);
+
+            % Store previous value
+            obj.previousRcEnabled = enableRC;
         end
 
         function resetImpl(obj)
@@ -76,37 +97,41 @@ classdef Tello_drone_control < matlab.System
         end
 
         %% Fonctions Simulink
-        function [out1, out2, out3] = getOutputSizeImpl(obj)
+        function [out1, out2, out3, out4] = getOutputSizeImpl(obj)
             % Retourne la taille pour chaque port de sortie
             out1 = [720, 960, 3];
             out2 = [1, 3]; % Angles ZYX
             out3 = [1, 3]; % Vitesse XYZ
+            out4 = [1, 3]; % Accélération XYZ
         end
 
-        function [out1, out2, out3] = getOutputDataTypeImpl(obj)
+        function [out1, out2, out3, out4] = getOutputDataTypeImpl(obj)
             % Retourne le type de données pour chaque port de sortie
             out1 = "uint8";
             out2 = 'double';
             out3 = 'double';
+            out4 = 'double';
         end
 
-        function [out1, out2, out3] = isOutputComplexImpl(obj)
+        function [out1, out2, out3, out4] = isOutputComplexImpl(obj)
             % Retourne false pour chaque port de sortie avec des données non complexes
             out1 = false;
             out2 = false;
             out3 = false;
+            out4 = false;
         end
 
-        function [out1, out2, out3] = isOutputFixedSizeImpl(obj)
+        function [out1, out2, out3, out4] = isOutputFixedSizeImpl(obj)
             % Retourne true pour chaque port de sortie avec une taille fixe
             out1 = true;
             out2 = true;
             out3 = true;
+            out4 = true;
         end
 
         function num = getNumInputsImpl(obj)
             % Définissez le nombre d'entrées du système
-            num = 9; % Slam, takeoff, land et les valeurs de déplacement
+            num = 11; % Slam, takeoff, land et les valeurs de déplacement
         end
     end
 end

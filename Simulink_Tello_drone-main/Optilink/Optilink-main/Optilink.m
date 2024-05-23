@@ -41,7 +41,7 @@ classdef Optilink < matlab.System
                 for i = 1:rigidBodies
                     rigidbody = frame.RigidBodies(i);
                     t = [rigidbody.x rigidbody.y rigidbody.z];
-                    q = [rigidbody.qx rigidbody.qy rigidbody.qz rigidbody.qw];
+                    q = [rigidbody.qw rigidbody.qx rigidbody.qy rigidbody.qz];
                     drone_matrice = Optilink.quaternionTranslationToTForm(q, t);
                     drones{i} = drone_matrice;
                 end
