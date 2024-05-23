@@ -1,5 +1,5 @@
 classdef ArucoMarkerDetection < matlab.System & matlab.system.mixin.Propagates
-    % ArucoMarkerDetection Detect ArUco markers and calculate camera position
+    % ArucoMarkerDetection Detect ArUco markers and calculate camera position and orientation
     
     properties
         % Public, tunable properties
@@ -7,7 +7,6 @@ classdef ArucoMarkerDetection < matlab.System & matlab.system.mixin.Propagates
         markerFamily = 'DICT_4X4_250';
         maxMarkers = 1; % Maximum number of detectable markers
         
-        % Camera intrinsic parameters
         focalLength;
         principalPoint;
         imageSize;
@@ -24,7 +23,7 @@ classdef ArucoMarkerDetection < matlab.System & matlab.system.mixin.Propagates
             obj.intrinsics = cameraIntrinsics(obj.focalLength, obj.principalPoint, obj.imageSize);
         end
         
-        function [outputImage, cameraPositions_repere_optitrack] = stepImpl(obj, I)
+        function [outputImage, cameraPositions_repere_optitrack, eulerAngles] = stepImpl(obj, I)
             % Undistort the image
             I = undistortImage(I, obj.intrinsics);
             
@@ -34,6 +33,7 @@ classdef ArucoMarkerDetection < matlab.System & matlab.system.mixin.Propagates
             % Initialize output variables
             outputImage = I;
             cameraPositions = NaN(obj.maxMarkers, 3);
+            eulerAngles = NaN(obj.maxMarkers, 3);
             
             % Points for the object coordinate system
             worldPoints = [0 0 0; obj.markerSizeInMM/2 0 0; 0 obj.markerSizeInMM/2 0; 0 0 obj.markerSizeInMM/2];
@@ -56,6 +56,9 @@ classdef ArucoMarkerDetection < matlab.System & matlab.system.mixin.Propagates
                 
                 % Calculate camera position relative to the marker
                 cameraPositions(i, :) = -poses(i).Translation * poses(i).Rotation';
+                
+                % Calculate Euler angles from rotation matrix
+                eulerAngles(i, :) = rotm2eul(poses(i).Rotation, 'ZYX');
             end
             
             % Convert camera positions to meters
@@ -63,11 +66,12 @@ classdef ArucoMarkerDetection < matlab.System & matlab.system.mixin.Propagates
             %Y vers -Z
             %Z vers Y
             %X vers X
-            cameraPositions_repere_optitrack = [cameraPositions_metre_XYZ(1); cameraPositions_metre_XYZ(3); -cameraPositions_metre_XYZ(2)];
+            cameraPositions_repere_optitrack = [cameraPositions_metre_XYZ(1) cameraPositions_metre_XYZ(3) -cameraPositions_metre_XYZ(2)];
 
             % Fill unused slots with zeros
             for i = (length(poses)+1):obj.maxMarkers
                 cameraPositions_metre_XYZ(i, :) = [0, 0, 0];
+                eulerAngles(i, :) = [0, 0, 0];
             end
         end
         
@@ -75,28 +79,32 @@ classdef ArucoMarkerDetection < matlab.System & matlab.system.mixin.Propagates
             % Initialize / reset discrete-state properties
         end
         
-        function [outputImage, cameraPositions_repere_optitrack] = getOutputSizeImpl(obj)
+        function [outputImage, cameraPositions_repere_optitrack, eulerAngles] = getOutputSizeImpl(obj)
             % Return size for each output port
             outputImage = [720, 960, 3];
             cameraPositions_repere_optitrack = [obj.maxMarkers, 3];  % Fixed size array for positions
+            eulerAngles = [obj.maxMarkers, 3];  % Fixed size array for Euler angles
         end
         
-        function [outputImage, cameraPositions_repere_optitrack] = getOutputDataTypeImpl(~)
+        function [outputImage, cameraPositions_repere_optitrack, eulerAngles] = getOutputDataTypeImpl(~)
             % Return data type for each output port
             outputImage = 'uint8';
             cameraPositions_repere_optitrack = 'double';
+            eulerAngles = 'double';
         end
         
-        function [outputImage, cameraPositions_repere_optitrack] = isOutputComplexImpl(~)
+        function [outputImage, cameraPositions_repere_optitrack, eulerAngles] = isOutputComplexImpl(~)
             % Return true for each output port with complex data
             outputImage = false;
             cameraPositions_repere_optitrack = false;
+            eulerAngles = false;
         end
         
-        function [outputImage, cameraPositions_repere_optitrack] = isOutputFixedSizeImpl(~)
+        function [outputImage, cameraPositions_repere_optitrack, eulerAngles] = isOutputFixedSizeImpl(~)
             % Return true for each output port with fixed size
             outputImage = true;
             cameraPositions_repere_optitrack = true;  % Fixed size for positions
+            eulerAngles = true;  % Fixed size for Euler angles
         end
     end
 end

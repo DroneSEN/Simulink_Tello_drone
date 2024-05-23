@@ -4,13 +4,14 @@ clear TelloCamera
 
 % Créer l'objet Tello et se connecter au drone
 Tello = ryze("Tello");
-
-% Activer les mission pads
+% 
+% % % Activer les mission pads
 %activateMissionPad(Tello);
-% deactivateMissionPad(Tello);
+% pause(2)
+deactivateMissionPad(Tello);
 
 % Activer les deux caméras (avant et arrière)
-switch_camera(Tello,"both");
+switch_camera(Tello,"front");
 TelloCamera = camera(Tello);
 
 % Prévisualiser la caméra Tello
