@@ -5,7 +5,7 @@ classdef ArucoMarkerDetection < matlab.System & matlab.system.mixin.Propagates
         % Public, tunable properties
         markerSizeInMM = 150;
         markerFamily = 'DICT_4X4_250';
-        maxMarkers = 10; % Maximum number of detectable markers
+        maxMarkers = 1; % Maximum number of detectable markers
         
         % Camera intrinsic parameters
         focalLength;
