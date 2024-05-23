@@ -24,7 +24,7 @@ classdef ArucoMarkerDetection < matlab.System & matlab.system.mixin.Propagates
             obj.intrinsics = cameraIntrinsics(obj.focalLength, obj.principalPoint, obj.imageSize);
         end
         
-        function [outputImage, cameraPositions_metre_XYZ] = stepImpl(obj, I)
+        function [outputImage, cameraPositions_repere_optitrack] = stepImpl(obj, I)
             % Undistort the image
             I = undistortImage(I, obj.intrinsics);
             
@@ -60,7 +60,11 @@ classdef ArucoMarkerDetection < matlab.System & matlab.system.mixin.Propagates
             
             % Convert camera positions to meters
             cameraPositions_metre_XYZ = cameraPositions / 1000; % Convert mm to meters
-            
+            %Y vers -Z
+            %Z vers Y
+            %X vers X
+            cameraPositions_repere_optitrack = [cameraPositions_metre_XYZ(1); cameraPositions_metre_XYZ(3); -cameraPositions_metre_XYZ(2)];
+
             % Fill unused slots with zeros
             for i = (length(poses)+1):obj.maxMarkers
                 cameraPositions_metre_XYZ(i, :) = [0, 0, 0];
@@ -71,28 +75,28 @@ classdef ArucoMarkerDetection < matlab.System & matlab.system.mixin.Propagates
             % Initialize / reset discrete-state properties
         end
         
-        function [outputImage, cameraPositions_metre_XYZ] = getOutputSizeImpl(obj)
+        function [outputImage, cameraPositions_repere_optitrack] = getOutputSizeImpl(obj)
             % Return size for each output port
             outputImage = [720, 960, 3];
-            cameraPositions_metre_XYZ = [obj.maxMarkers, 3];  % Fixed size array for positions
+            cameraPositions_repere_optitrack = [obj.maxMarkers, 3];  % Fixed size array for positions
         end
         
-        function [outputImage, cameraPositions_metre_XYZ] = getOutputDataTypeImpl(~)
+        function [outputImage, cameraPositions_repere_optitrack] = getOutputDataTypeImpl(~)
             % Return data type for each output port
             outputImage = 'uint8';
-            cameraPositions_metre_XYZ = 'double';
+            cameraPositions_repere_optitrack = 'double';
         end
         
-        function [outputImage, cameraPositions_metre_XYZ] = isOutputComplexImpl(~)
+        function [outputImage, cameraPositions_repere_optitrack] = isOutputComplexImpl(~)
             % Return true for each output port with complex data
             outputImage = false;
-            cameraPositions_metre_XYZ = false;
+            cameraPositions_repere_optitrack = false;
         end
         
-        function [outputImage, cameraPositions_metre_XYZ] = isOutputFixedSizeImpl(~)
+        function [outputImage, cameraPositions_repere_optitrack] = isOutputFixedSizeImpl(~)
             % Return true for each output port with fixed size
             outputImage = true;
-            cameraPositions_metre_XYZ = true;  % Fixed size for positions
+            cameraPositions_repere_optitrack = true;  % Fixed size for positions
         end
     end
 end
