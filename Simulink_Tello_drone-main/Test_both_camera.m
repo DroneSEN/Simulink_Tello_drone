@@ -6,12 +6,12 @@ clear TelloCamera
 Tello = ryze("Tello");
 % 
 % % % Activer les mission pads
-%activateMissionPad(Tello);
+activateMissionPad(Tello);
 % pause(2)
-deactivateMissionPad(Tello);
+% deactivateMissionPad(Tello);
 
 % Activer les deux caméras (avant et arrière)
-switch_camera(Tello,"front");
+switch_camera(Tello,"both");
 TelloCamera = camera(Tello);
 
 % Prévisualiser la caméra Tello
