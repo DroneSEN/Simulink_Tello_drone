@@ -21,6 +21,8 @@ classdef Tello_drone_control < matlab.System
         SizeImageDown = [240, 320, 3]; % Taille de l'image par défaut pour la caméra inférieure
         prvRoundedRcSpeeds = [0; 0; 0; 0]; % Dernières valeurs de la commande RC
         CurrentVideoDirection = VideoDirection.Forward; % Direction de la caméra
+        hasTakenOffStatus; % Statut du décollage pour la sortie
+        lastCommandTime; % Temps du dernier décollage ou atterrissage
     end
 
     methods (Access = protected)
@@ -35,9 +37,11 @@ classdef Tello_drone_control < matlab.System
             obj.imgFront = zeros(obj.SizeImageFront, 'uint8');
             obj.imgDown = zeros(obj.SizeImageDown, 'uint8');
             obj.hasTakenOff = false; % Initialisation du statut de décollage
+            obj.hasTakenOffStatus = 0; % Initialisation du statut de décollage pour la sortie
+            obj.lastCommandTime = uint64(0); % Initialisation du temps de la dernière commande
         end
 
-        function [imageFront, imageDown, Eulerangles, speedXYZ, batteryLevel, currentVideoDirection] = stepImpl(obj, enableVideo, tkoff, landing, enableRC, rcspeeds, cmdVideoDirection, xMove, yMove, zMove, degree, movexyz, moverotate)
+        function [imageFront, imageDown, Eulerangles, speedXYZ, batteryLevel, currentVideoDirection, hasTakenOffStatus] = stepImpl(obj, enableVideo, tkoff, landing, enableRC, rcspeeds, cmdVideoDirection, xMove, yMove, zMove, degree, movexyz, moverotate)
             % Gestion de la vidéo si activée
             if enableVideo
                 image = snapshot(obj.cam); % Récupération de l'image de la caméra
@@ -66,12 +70,24 @@ classdef Tello_drone_control < matlab.System
             if tkoff && ~obj.hasTakenOff
                 takeoff(obj.drone, "WaitUntilDone", false);
                 obj.hasTakenOff = true;
+                obj.lastCommandTime = tic;
             end
 
             % Gestion de l'atterrissage
             if landing && obj.hasTakenOff
                 land(obj.drone, "WaitUntilDone", false);
                 obj.hasTakenOff = false;
+                obj.lastCommandTime = tic;
+            end
+
+            % Mise à jour du statut de décollage après 2 secondes
+            if obj.lastCommandTime ~= 0 && toc(obj.lastCommandTime) > 2
+                if obj.hasTakenOff
+                    obj.hasTakenOffStatus = 1;
+                else
+                    obj.hasTakenOffStatus = 0;
+                end
+                obj.lastCommandTime = uint64(0); % Reset timer after status update
             end
 
             % % Déplacement du drone
@@ -108,11 +124,16 @@ classdef Tello_drone_control < matlab.System
 
             % Mise à jour de l'état précédent du RC
             obj.previousRcEnabled = enableRC;
+
+            % Assignation du statut de décollage à la sortie
+            hasTakenOffStatus = obj.hasTakenOffStatus;
         end
 
         function resetImpl(obj)
             % Réinitialisation des propriétés internes
             obj.hasTakenOff = false;
+            obj.hasTakenOffStatus = 0;
+            obj.lastCommandTime = uint64(0);
         end
 
         function releaseImpl(obj)
@@ -122,7 +143,7 @@ classdef Tello_drone_control < matlab.System
         end
 
         %% Fonctions Simulink
-        function [out1, out2, out3, out4, out5, out6] = getOutputSizeImpl(obj)
+        function [out1, out2, out3, out4, out5, out6, out7] = getOutputSizeImpl(obj)
             % Retourne la taille pour chaque port de sortie
             out1 = obj.SizeImageFront; % Taille de l'image frontale
             out2 = obj.SizeImageDown;  % Taille de l'image inférieure
@@ -130,9 +151,10 @@ classdef Tello_drone_control < matlab.System
             out4 = [1, 3]; % Vitesse XYZ
             out5 = [1, 1]; % Niveau de batterie
             out6 = [1, 1]; % Direction actuelle de la vidéo
+            out7 = [1, 1]; % Statut du décollage
         end
 
-        function [out1, out2, out3, out4, out5, out6] = getOutputDataTypeImpl(obj)
+        function [out1, out2, out3, out4, out5, out6, out7] = getOutputDataTypeImpl(obj)
             % Retourne le type de données pour chaque port de sortie
             out1 = "uint8";    % Type de données pour l'image frontale
             out2 = "uint8";    % Type de données pour l'image inférieure
@@ -140,9 +162,10 @@ classdef Tello_drone_control < matlab.System
             out4 = 'double';   % Type de données pour la vitesse
             out5 = 'double';   % Type de données pour le niveau de batterie
             out6 = 'uint16';   % Type de données pour la direction de la caméra
+            out7 = 'double';   % Type de données pour le statut du décollage
         end
 
-        function [out1, out2, out3, out4, out5, out6] = isOutputComplexImpl(obj)
+        function [out1, out2, out3, out4, out5, out6, out7] = isOutputComplexImpl(obj)
             % Retourne false pour chaque port de sortie avec des données non complexes
             out1 = false;
             out2 = false;
@@ -150,9 +173,10 @@ classdef Tello_drone_control < matlab.System
             out4 = false;
             out5 = false;
             out6 = false;
+            out7 = false;
         end
 
-        function [out1, out2, out3, out4, out5, out6] = isOutputFixedSizeImpl(obj)
+        function [out1, out2, out3, out4, out5, out6, out7] = isOutputFixedSizeImpl(obj)
             % Retourne true pour chaque port de sortie avec une taille fixe
             out1 = true;  % Taille fixe pour l'image frontale
             out2 = true;  % Taille fixe pour l'image inférieure
@@ -160,6 +184,7 @@ classdef Tello_drone_control < matlab.System
             out4 = true;
             out5 = true;
             out6 = true;
+            out7 = true;
         end
 
         function num = getNumInputsImpl(obj)
@@ -169,7 +194,7 @@ classdef Tello_drone_control < matlab.System
 
         function num = getNumOutputsImpl(obj)
             % Définissez le nombre de sorties du système
-            num = 6; % Nombre de sorties attendu
+            num = 7; % Nombre de sorties attendu
         end
     end
 end
