@@ -1,110 +1,115 @@
 classdef ArucoMarkerDetection < matlab.System & matlab.system.mixin.Propagates
-    % ArucoMarkerDetection Detect ArUco markers and calculate camera position and orientation
+    % ArucoMarkerDetection - Détecte des marqueurs ArUco et calcule la position et l'orientation de la caméra
     
     properties
-        % Public, tunable properties
-        markerSizeInMM = 150;
-        markerFamily = 'DICT_4X4_250';
-        maxMarkers = 1; % Maximum number of detectable markers
+        % Propriétés publiques et ajustables
+        markerSizeInMM = 150; % Taille des marqueurs ArUco en millimètres
+        markerFamily = 'DICT_4X4_250'; % Famille de marqueurs ArUco
+        maxMarkers = 1; % Nombre maximum de marqueurs détectables
         
-        focalLength;
-        principalPoint;
-        imageSize;
+        focalLength; % Longueur focale de la caméra
+        principalPoint; % Point principal de la caméra
+        imageSize; % Taille de l'image
     end
     
     properties(Access = private)
-        % Pre-computed constants
-        intrinsics;  % Camera intrinsics object
+        % Constantes pré-calculées
+        intrinsics;  % Objet des paramètres intrinsèques de la caméra
     end
     
     methods(Access = protected)
         function setupImpl(obj)
-            % Set camera intrinsics using the provided properties
+            % Configuration des paramètres intrinsèques de la caméra avec les propriétés fournies
             obj.intrinsics = cameraIntrinsics(obj.focalLength, obj.principalPoint, obj.imageSize);
         end
         
         function [outputImage, cameraPositions_repere_optitrack, eulerAngles] = stepImpl(obj, I)
-            % Undistort the image
+            % I : image d'entrée
+            
+            % Correction de la distorsion de l'image
             I = undistortImage(I, obj.intrinsics);
             
-            % Estimate marker poses
+            % Estimation des poses des marqueurs
             [ids, locs, poses] = readArucoMarker(I, obj.markerFamily, obj.intrinsics, obj.markerSizeInMM);
             
-            % Initialize output variables
-            outputImage = I;
-            cameraPositions = NaN(obj.maxMarkers, 3);
-            eulerAngles = NaN(obj.maxMarkers, 3);
+            % Initialisation des variables de sortie
+            outputImage = I; % Image annotée en sortie
+            cameraPositions = NaN(obj.maxMarkers, 3); % Positions de la caméra
+            eulerAngles = NaN(obj.maxMarkers, 3); % Angles d'Euler
             
-            % Points for the object coordinate system
+            % Points pour le système de coordonnées de l'objet
             worldPoints = [0 0 0; obj.markerSizeInMM/2 0 0; 0 obj.markerSizeInMM/2 0; 0 0 obj.markerSizeInMM/2];
 
+            % Parcours de chaque pose détectée
             for i = 1:length(poses)
                 if i > obj.maxMarkers
                     break;
                 end
-                % Get image coordinates for axes
+                
+                % Calcul des coordonnées image pour les axes
                 imagePoints = worldToImage(obj.intrinsics, poses(i).Rotation, poses(i).Translation, worldPoints);
                 
-                % Points for axes
+                % Points pour les axes
                 axesPoints = [imagePoints(1,:) imagePoints(2,:);
                               imagePoints(1,:) imagePoints(3,:);
                               imagePoints(1,:) imagePoints(4,:)];
                 
-                % Draw colored axes
+                % Dessin des axes colorés sur l'image
                 outputImage = insertShape(outputImage, "Line", axesPoints, ...
                     'Color', ["red","green","blue"], 'LineWidth', 10);
                 
-                % Calculate camera position relative to the marker
+                % Calcul de la position de la caméra par rapport au marqueur
                 cameraPositions(i, :) = -poses(i).Translation * poses(i).Rotation';
                 
-                % Calculate Euler angles from rotation matrix
+                % Calcul des angles d'Euler à partir de la matrice de rotation
                 eulerAngles(i, :) = rotm2eul(poses(i).Rotation, 'ZYX');
             end
             
-            % Convert camera positions to meters
-            cameraPositions_metre_XYZ = cameraPositions / 1000; % Convert mm to meters
-            %Y vers -Z
-            %Z vers Y
-            %X vers X
-            cameraPositions_repere_optitrack = [cameraPositions_metre_XYZ(1) cameraPositions_metre_XYZ(3) -cameraPositions_metre_XYZ(2)];
+            % Conversion des positions de la caméra en mètres
+            cameraPositions_metre_XYZ = cameraPositions / 1000; % Conversion de mm en mètres
+            
+            % Conversion des positions au repère optitrack
+            cameraPositions_repere_optitrack = [cameraPositions_metre_XYZ(:,1), ...
+                                                cameraPositions_metre_XYZ(:,3), ...
+                                                -cameraPositions_metre_XYZ(:,2)];
 
-            % Fill unused slots with zeros
+            % Remplir les emplacements non utilisés avec des zéros
             for i = (length(poses)+1):obj.maxMarkers
-                cameraPositions_metre_XYZ(i, :) = [0, 0, 0];
+                cameraPositions_repere_optitrack(i, :) = [0, 0, 0];
                 eulerAngles(i, :) = [0, 0, 0];
             end
         end
         
         function resetImpl(obj)
-            % Initialize / reset discrete-state properties
+            % Initialiser / réinitialiser les propriétés discrètes
         end
         
         function [outputImage, cameraPositions_repere_optitrack, eulerAngles] = getOutputSizeImpl(obj)
-            % Return size for each output port
+            % Retourner la taille de chaque port de sortie
             outputImage = [720, 960, 3];
-            cameraPositions_repere_optitrack = [obj.maxMarkers, 3];  % Fixed size array for positions
-            eulerAngles = [obj.maxMarkers, 3];  % Fixed size array for Euler angles
+            cameraPositions_repere_optitrack = [obj.maxMarkers, 3];  % Taille fixe pour les positions
+            eulerAngles = [obj.maxMarkers, 3];  % Taille fixe pour les angles d'Euler
         end
         
         function [outputImage, cameraPositions_repere_optitrack, eulerAngles] = getOutputDataTypeImpl(~)
-            % Return data type for each output port
+            % Retourner le type de données de chaque port de sortie
             outputImage = 'uint8';
             cameraPositions_repere_optitrack = 'double';
             eulerAngles = 'double';
         end
         
         function [outputImage, cameraPositions_repere_optitrack, eulerAngles] = isOutputComplexImpl(~)
-            % Return true for each output port with complex data
+            % Retourner vrai pour chaque port de sortie avec des données complexes
             outputImage = false;
             cameraPositions_repere_optitrack = false;
             eulerAngles = false;
         end
         
         function [outputImage, cameraPositions_repere_optitrack, eulerAngles] = isOutputFixedSizeImpl(~)
-            % Return true for each output port with fixed size
+            % Retourner vrai pour chaque port de sortie avec une taille fixe
             outputImage = true;
-            cameraPositions_repere_optitrack = true;  % Fixed size for positions
-            eulerAngles = true;  % Fixed size for Euler angles
+            cameraPositions_repere_optitrack = true;  % Taille fixe pour les positions
+            eulerAngles = true;  % Taille fixe pour les angles d'Euler
         end
     end
 end
