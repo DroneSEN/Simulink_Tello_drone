@@ -14,5 +14,6 @@ To do
 
 ## Bibliography
 
-REF ORBslam 3
-https://arxiv.org/pdf/2007.11898
+*ORB-SLAM3: An Accurate Open-Source Library for Visual, Visual-Inertial and Multi-Map SLAM* [Link](https://arxiv.org/pdf/2007.11898)
+
+Steven M. LaValle, *Planning Algorithms* [Link](https://lavalle.pl/planning/)
