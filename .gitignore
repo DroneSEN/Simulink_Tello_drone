@@ -1,2 +1,8 @@
 slprj/
 .DS_Store
+*.asv
+*.mat
+*.l
+*.mlx
+*.slx.original
+*.autosave
