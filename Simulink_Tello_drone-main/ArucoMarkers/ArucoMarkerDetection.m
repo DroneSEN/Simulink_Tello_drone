@@ -33,7 +33,12 @@ classdef ArucoMarkerDetection < matlab.System & matlab.system.mixin.Propagates
             [ids, locs, poses] = readArucoMarker(I, obj.markerFamily, obj.intrinsics, obj.markerSizeInMM);
             
             % Initialisation des variables de sortie
-            outputImage = I; % Image annotée en sortie
+            % outputImage = I;
+            outputImage = zeros(obj.imageSize(1), obj.imageSize(2), 3); % Image annotée en sortie
+            outputImage(:,:,1) = I;
+            outputImage(:,:,2) = I;
+            outputImage(:,:,3) = I;
+
             cameraPositions = NaN(obj.maxMarkers, 3); % Positions de la caméra
             eulerAngles = NaN(obj.maxMarkers, 3); % Angles d'Euler
             
@@ -52,7 +57,7 @@ classdef ArucoMarkerDetection < matlab.System & matlab.system.mixin.Propagates
                 % Points pour les axes
                 axesPoints = [imagePoints(1,:) imagePoints(2,:);
                               imagePoints(1,:) imagePoints(3,:);
-                              imagePoints(1,:) imagePoints(4,:)];
+                              imagePoints(1,:) imagePoints(4,:)];                
                 
                 % Dessin des axes colorés sur l'image
                 outputImage = insertShape(outputImage, "Line", axesPoints, ...
@@ -78,6 +83,8 @@ classdef ArucoMarkerDetection < matlab.System & matlab.system.mixin.Propagates
                 cameraPositions_repere_optitrack(i, :) = [0, 0, 0];
                 eulerAngles(i, :) = [0, 0, 0];
             end
+
+            outputImage = uint8(outputImage);
         end
         
         function resetImpl(obj)
@@ -86,7 +93,7 @@ classdef ArucoMarkerDetection < matlab.System & matlab.system.mixin.Propagates
         
         function [outputImage, cameraPositions_repere_optitrack, eulerAngles] = getOutputSizeImpl(obj)
             % Retourner la taille de chaque port de sortie
-            outputImage = [720, 960, 3];
+            outputImage = [obj.imageSize(1), obj.imageSize(2), 3];
             cameraPositions_repere_optitrack = [obj.maxMarkers, 3];  % Taille fixe pour les positions
             eulerAngles = [obj.maxMarkers, 3];  % Taille fixe pour les angles d'Euler
         end

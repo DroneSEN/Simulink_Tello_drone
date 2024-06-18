@@ -1,4 +1,4 @@
-classdef VideoDirection < uint16
+classdef VideoDirection < Simulink.IntEnumType
     enumeration
         Forward (0)
         Downward (1)
