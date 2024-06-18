@@ -18,7 +18,12 @@ classdef Tello_drone_control < matlab.System
         hasTakenOff;    % Statut du décollage
         previousRcEnabled = 0; % Flag pour détecter un changement dans l'activation du RC
         SizeImageFront = [720, 960, 3]; % Taille de l'image par défaut pour la caméra frontale
+
+        % Taille caméra inférieure : 
+        % - Drone noir : [720, 320, 3]
+        % - Drone blanc : []
         SizeImageDown = [240, 320, 3]; % Taille de l'image par défaut pour la caméra inférieure
+        SizeImageDownProcessed = [320, 240, 1];  % Taille de l'image pour la caméra inférieure après traitement
         prvRoundedRcSpeeds = [0; 0; 0; 0]; % Dernières valeurs de la commande RC
         CurrentVideoDirection = VideoDirection.Forward; % Direction de la caméra
         hasTakenOffStatus; % Statut du décollage pour la sortie
@@ -35,36 +40,52 @@ classdef Tello_drone_control < matlab.System
             end
             obj.cam = camera(obj.drone);
             obj.imgFront = zeros(obj.SizeImageFront, 'uint8');
-            obj.imgDown = zeros(obj.SizeImageDown, 'uint8');
+            obj.imgDown = zeros(obj.SizeImageDownProcessed, 'uint8');
             obj.hasTakenOff = false; % Initialisation du statut de décollage
             obj.hasTakenOffStatus = 0; % Initialisation du statut de décollage pour la sortie
             obj.lastCommandTime = uint64(0); % Initialisation du temps de la dernière commande
         end
 
-        function [imageFront, imageDown, Eulerangles, speedXYZ, batteryLevel, currentVideoDirection, hasTakenOffStatus] = stepImpl(obj, enableVideo, tkoff, landing, enableRC, rcspeeds, cmdVideoDirection, xMove, yMove, zMove, degree, movexyz, moverotate)
+        function [imageFront, imageDown, Eulerangles, speedXYZ, batteryLevel, currentVideoDirection, hasTakenOffStatus] = stepImpl(obj, enableVideo, tkoff, landing, enableRC, cmdVideoDirection, rcspeeds, xMove, yMove, zMove, degree, movexyz, moverotate)
             % Gestion de la vidéo si activée
             if enableVideo
                 image = snapshot(obj.cam); % Récupération de l'image de la caméra
 
                 % Mise à jour de l'image capturée en fonction de la direction de la caméra
                 if ~isempty(image)
-                    if obj.CurrentVideoDirection == VideoDirection.Forward && ~any(size(image) - obj.SizeImageFront)
+                    if ~any(size(image) - obj.SizeImageFront)
                         obj.imgFront = image;
-                    elseif obj.CurrentVideoDirection == VideoDirection.Downward && ~any(size(image) - obj.SizeImageDown)
-                        obj.imgDown = image;
+
+                        % On reçoit des frames de la caméra frontale, on
+                        % actualise la direction
+                        obj.CurrentVideoDirection = VideoDirection.Forward;
+                    elseif ~any(size(image) - obj.SizeImageDown)
+                        % Des transformations sont appliquées à la caméra 
+                        % pour l'aligner avec l'axe x du drone et alléger 
+                        % la taille
+                        % - 3 canaux par défaut, on n'en utilise qu'un seul
+                        % car nuances de gris
+                        % - On transpose la matrice
+                        % - On intervertit les colonnes pour corriger
+                        % l'effet miroir
+                        obj.imgDown = flip(transpose(image(:,:,1)), 2);
+
+                        % On reçoit des frames de la caméra frontale, on
+                        % actualise la direction
+                        obj.CurrentVideoDirection = VideoDirection.Downward;
                     end
                 end
 
                 % Commande de changement de direction de la caméra si nécessaire
                 if obj.CurrentVideoDirection ~= cmdVideoDirection
+                    fprintf('Switch camera')
                     switch_camera(obj.drone, uint16(cmdVideoDirection));
-                    obj.CurrentVideoDirection = cmdVideoDirection; % Mise à jour de la direction actuelle
                 end
             end
 
             % Assignation des images aux sorties
-            imageFront = obj.imgFront;
-            imageDown = obj.imgDown;
+            imageFront = uint8(obj.imgFront);
+            imageDown = uint8(obj.imgDown);
 
             % Gestion du décollage
             if tkoff && ~obj.hasTakenOff
@@ -120,7 +141,7 @@ classdef Tello_drone_control < matlab.System
             batteryLevel = readBattery(obj.drone);
 
             % Renvoi de la direction actuelle de la caméra
-            currentVideoDirection = uint16(obj.CurrentVideoDirection);
+            currentVideoDirection = VideoDirection(obj.CurrentVideoDirection);
 
             % Mise à jour de l'état précédent du RC
             obj.previousRcEnabled = enableRC;
@@ -137,6 +158,9 @@ classdef Tello_drone_control < matlab.System
         end
 
         function releaseImpl(obj)
+            % Reset de la caméra lors de la fin de l'exécution
+            switch_camera(obj.drone, uint16(VideoDirection.Forward));
+
             % Fermeture de la connexion à la caméra et au drone
             clear obj.cam;
             clear obj.drone;
@@ -146,7 +170,7 @@ classdef Tello_drone_control < matlab.System
         function [out1, out2, out3, out4, out5, out6, out7] = getOutputSizeImpl(obj)
             % Retourne la taille pour chaque port de sortie
             out1 = obj.SizeImageFront; % Taille de l'image frontale
-            out2 = obj.SizeImageDown;  % Taille de l'image inférieure
+            out2 = obj.SizeImageDownProcessed;  % Taille de l'image inférieure modifiée
             out3 = [1, 3]; % Angles ZYX
             out4 = [1, 3]; % Vitesse XYZ
             out5 = [1, 1]; % Niveau de batterie
@@ -161,7 +185,7 @@ classdef Tello_drone_control < matlab.System
             out3 = 'double';   % Type de données pour les angles d'Euler
             out4 = 'double';   % Type de données pour la vitesse
             out5 = 'double';   % Type de données pour le niveau de batterie
-            out6 = 'uint16';   % Type de données pour la direction de la caméra
+            out6 = 'VideoDirection';   % Type de données pour la direction de la caméra
             out7 = 'double';   % Type de données pour le statut du décollage
         end
 
