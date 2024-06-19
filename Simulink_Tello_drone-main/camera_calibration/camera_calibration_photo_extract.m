@@ -1,20 +1,58 @@
-clear Tello
+clear;
 
+% =========================================================================
+% Paramètres de calibration
+% =========================================================================
+% Sélection de la direction de la caméra (Forward ou Downward)
+camera_dir = VideoDirection.Downward;
+
+% Nom du drone à calibrer
+DroneName = '9BA074';
+
+
+% =========================================================================
+% Procédure de calibration
+% =========================================================================
 Tello = ryze("Tello");
 TelloCamera = camera(Tello);
+
+% Détermination du répertoire
+
+
+ImageFolder = fullfile(pwd(), 'camera_calibration', strcat('Camera_calibration_', DroneName));
+if camera_dir == VideoDirection.Forward
+    ImageFolder = fullfile(ImageFolder,'front');
+else
+    ImageFolder = fullfile(ImageFolder,'down');
+end
+
+% Switch vers la bonne caméra
+switch_camera(Tello, camera_dir);
+
 % cam = webcam(1);
-ImageFolder ='C:\Users\user\OneDrive - ESTACA\Documents\DRONE_SEN4\Simulink_Tello_drone-main_V3.0\camera_calibration\Camera_calibration_6363AC';
 preview(TelloCamera)
 
-for k=1:30
-    Image = snapshot(TelloCamera);
-    file_name = sprintf('Image%d.png',k);
-    imgName = fullfile(ImageFolder,file_name) ;
-    imwrite(Image,imgName);
-    imshow(Image);
-    pause(1);
 
+answer = questdlg('Start calibration ?', 'Yes', 'Cancel');
+
+% Start calibration
+if strcmp(answer,'Yes')
+    for k=1:30
+        Image = snapshot(TelloCamera);
+        file_name = sprintf('Image%d.png',k);
+        imgName = fullfile(ImageFolder,file_name);
+        if ~isempty(Image)
+            imwrite(Image,imgName);
+            imshow(Image);
+        else
+            warning("An error occured with image n°%d, not saved", k);
+        end
+        pause(1);
+    end
 end
+
+% Reset camera
+switch_camera(Tello, VideoDirection.Forward);
 
 clear;
 
