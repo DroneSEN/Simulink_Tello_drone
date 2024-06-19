@@ -2,42 +2,49 @@ classdef Yolo_Object_Detector < matlab.System
     % Yolo_Object_Detector - Détecte des objets et calcule leur position en XYZ
 
     properties (Access = private)
-        yolo            % Détecteur YOLO
-        focalLength     % Longueur focale de la caméra
-        objectDimensions % Tailles moyennes des objets (hauteur, largeur, profondeur)
-        targetObject    % Objet cible à détecter
-        imageSize       % Taille de l'image [height, width]
-        imagecenterpoint
+        yolo                % Détecteur YOLO
+        focalLength         % Longueur focale de la caméra
+        objectDimensions    % Tailles moyennes des objets (hauteur, largeur, profondeur)
+        targetObject        % Objet cible à détecter
+        imageSize           % Taille de l'image [height, width]
+        imagecenterpoint    % Point central de l'image
+        lastKnownPos        % Dernière position connue de l'objet
+        intrinsicMatrix     % Matrice intrinsèque (matrice de projection)
     end
 
     methods (Access = protected)
         %% Initialisation
         function setupImpl(obj)
-            % Définir le nom du modèle YOLO utilisé
-            name = 'tiny-yolov4-coco';
-            
             % Initialiser le détecteur YOLO
+            name = 'tiny-yolov4-coco';
             obj.yolo = yolov4ObjectDetector(name);
             
-            % Définir la longueur focale de la caméra (exemple de valeurs)
-            obj.focalLength = [878.5, 883]; % Exemples de valeurs
+            % Définir la longueur focale de la caméra et le point principal (exemples de valeurs)
+            obj.focalLength = [878.5236, 883.0086];
+            obj.imagecenterpoint = [488.4168, 363.6072];
             
             % Définir la taille de l'image [height, width] en pixels
             obj.imageSize = [720, 960];
-            obj.imagecenterpoint = [488.416,363.607];
+            
             % Charger les dimensions moyennes des objets à partir d'un fichier
             data = load('Matlab_System/objectDimensions.mat');
             obj.objectDimensions = data.objectDimensions;
             
             % Définir l'objet cible (initialisation)
-            obj.targetObject = 'tvmonitor'; % Spécifiez ici l'objet cible initial
+            obj.targetObject = 'tvmonitor'; 
+            
+            % Initialiser la dernière position connue
+            obj.lastKnownPos = [NaN; NaN; NaN];
+            
+            % Définir la matrice intrinsèque (de projection) basée sur la longueur focale et le centre de l'image
+            obj.intrinsicMatrix = [obj.focalLength(1), 0, obj.imagecenterpoint(1);
+                                   0, obj.focalLength(2), obj.imagecenterpoint(2);
+                                   0, 0, 1];
         end
 
         %% Détection des objets et calcul de leurs positions
-        function [objectPos, objectType, annotatedImage] = stepImpl(obj, I, rotationMatrix, translationMatrix)
+        function [objectPos, objectType, annotatedImage] = stepImpl(obj, I)
             % I : image d'entrée
-            % rotationMatrix : matrice de rotation 3x3 du drone
-            % translationMatrix : vecteur de translation 3x1 du drone
 
             % Détecter les objets dans l'image
             [bboxs, ~, labels] = detect(obj.yolo, I, 'Threshold', 0.1);
@@ -53,20 +60,24 @@ classdef Yolo_Object_Detector < matlab.System
             labels = labels(targetIdx);
 
             % Initialiser la position de l'objet et le type d'objet
-            objectPos = [NaN; NaN; NaN];
-            objectType = '';
-
-            % Annoter l'image
+            objectType = "";
             annotatedImage = I;
 
-            % Si aucun objet n'est détecté ou plusieurs objets sont détectés, retourner NaN et type vide
-            if isempty(bboxs) || size(bboxs, 1) > 1
+            % Si aucun objet n'est détecté, retourner la dernière position connue
+            if isempty(bboxs)
+                objectPos = obj.lastKnownPos;
+                return;
+            end
+
+            % Si plusieurs objets sont détectés, retourner la dernière position connue
+            if size(bboxs, 1) > 1
+                objectPos = obj.lastKnownPos;
                 return;
             end
 
             % Paramètres de l'image et de la boîte englobante
-            W = size(I, 2); % Largeur de l'image
-            H = size(I, 1); % Hauteur de l'image
+            W = obj.imageSize(2); % Largeur de l'image
+            H = obj.imageSize(1); % Hauteur de l'image
 
             % Définir les variables pour le calcul des positions
             x = bboxs(1, 1);
@@ -74,9 +85,7 @@ classdef Yolo_Object_Detector < matlab.System
             w = bboxs(1, 3);
             h = bboxs(1, 4);
 
-            % Calcul des centres
-            x_image_center = W / 2;
-            y_image_center = H / 2;
+            % Calcul des centres de la boîte englobante
             x_center = x + w / 2;
             y_center = y + h / 2;
 
@@ -95,23 +104,35 @@ classdef Yolo_Object_Detector < matlab.System
                 % Ajuster la distance avec la moitié de la profondeur de l'objet
                 D = D + (realDepth / 2);
 
-                % Transformation des coordonnées en utilisant la matrice de rotation
-                X = D;
-                Y = D * (x_center - x_image_center) / obj.focalLength(1);
-                Z = D * (y_center - y_image_center) / obj.focalLength(2);
-                
-                % Coordonnées dans le référentiel de la caméra
-                objectPos_cam = [X; Y; Z];
+                % Calcul des coordonnées dans le référentiel de la caméra
+                % Utilisation de la matrice intrinsèque pour convertir les coordonnées de pixels en mètres
+                invIntrinsic = inv(obj.intrinsicMatrix);
+                pixel_coords = [x_center; y_center; 1];
+                camera_coords = invIntrinsic * (D * pixel_coords);
+
+                X_cam = camera_coords(1);
+                Y_cam = camera_coords(2);
+                Z_cam = D;
+
+                % Conversion des coordonnées dans le référentiel de la caméra vers celui du drone
+                % Référentiel caméra : X vers la droite, Y vers le haut, Z vers l'avant
+                % Référentiel drone : X vers l'avant, Y vers la droite, Z vers le bas
+                % Correspondance : X_drone = Z_cam, Y_drone = X_cam, Z_drone = -Y_cam
+                objectPos_cam_torefdrone = [Z_cam; X_cam; -Y_cam];
                 
                 % Transformation en coordonnées du drone
-                objectPos = rotationMatrix * objectPos_cam + translationMatrix;
+                objectPos = objectPos_cam_torefdrone;
+                objectPos = double(objectPos);  % S'assurer que objectPos est de type double
 
                 % Annoter l'image avec la distance et la position
                 label = sprintf('%s (%.2f m, [%.2f, %.2f, %.2f])', obj.targetObject, D, objectPos(1), objectPos(2), objectPos(3));
                 annotatedImage = insertObjectAnnotation(I, "rectangle", bboxs(1, :), label, 'Color', 'yellow');
                 
                 % Définir le type d'objet
-                objectType = obj.targetObject;
+                objectType = string(obj.targetObject);  % S'assurer que objectType est de type string
+                
+                % Mettre à jour la dernière position connue
+                obj.lastKnownPos = objectPos;
             end
         end
 
@@ -127,7 +148,7 @@ classdef Yolo_Object_Detector < matlab.System
         function [out1, out2, out3] = getOutputDataTypeImpl(~)
             % Retourner le type de données de chaque port de sortie
             out1 = 'double'; % objectPos
-            out2 = 'char'; % objectType
+            out2 = 'string'; % objectType
             out3 = 'uint8'; % annotatedImage
         end
 
@@ -148,11 +169,9 @@ classdef Yolo_Object_Detector < matlab.System
         end
 
         %% Définir les noms des ports d'entrée
-        function [name1, name2, name3] = getInputNamesImpl(~)
+        function [name1] = getInputNamesImpl(~)
             % Retourner les noms des ports d'entrée pour le bloc système
             name1 = 'Image';
-            name2 = 'RotationMatrix';
-            name3 = 'TranslationMatrix';
         end
 
         %% Définir les noms des ports de sortie
