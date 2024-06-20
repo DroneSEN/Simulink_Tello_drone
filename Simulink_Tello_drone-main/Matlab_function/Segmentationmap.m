@@ -29,7 +29,7 @@ if ~isempty(objectPositions)
         % Get the dimensions of the current object
         if isfield(objectDimensions, objType)
             dimensions = objectDimensions.(objType);
-            cubeSize = [dimensions(2), dimensions(1), dimensions(3)];  % Map dimensions to [width, height, depth]
+            cubeSize = [dimensions(2), dimensions(3), dimensions(1)];  % Map dimensions to [height, width, depth]
         else
             % If dimensions are not found, use default values
             cubeSize = [1, 1, 1];
@@ -44,9 +44,9 @@ if ~isempty(objectPositions)
 end
 
 % Plot the drone positions
-if evalin('base', 'exist(''droneTruePositions'', ''var'')')
-    droneTruePositions = evalin('base', 'droneTruePositions');
-    plot3(droneTruePositions(:, 1), droneTruePositions(:, 3), droneTruePositions(:, 2), 'b-', 'LineWidth', 2, 'DisplayName', 'True Position');
+if evalin('base', 'exist(''groundtruthopti'', ''var'')')
+    groundtruthopti = evalin('base', 'groundtruthopti');
+    plot3(groundtruthopti(:, 1), groundtruthopti(:, 3), groundtruthopti(:, 2), 'b-', 'LineWidth', 2, 'DisplayName', 'True Position');
 end
 
 if evalin('base', 'exist(''droneSlamPositions'', ''var'')')
@@ -68,7 +68,7 @@ end
 % Customize the plot
 xlabel('X');
 ylabel('Z');
-zlabel('Y');
+zlabel('Y');%repère optitrack 
 title('Detected Objects, Drone Path, and SLAM Points in 3D Space');
 grid on;
 axis equal;
@@ -77,9 +77,6 @@ axis equal;
 xlim([-5, 5]);
 ylim([-5, 5]);
 zlim([0, 2]);
-
-% Add a legend
-legend show;
 
 % Start the drone at the center of the graph
 view(3);

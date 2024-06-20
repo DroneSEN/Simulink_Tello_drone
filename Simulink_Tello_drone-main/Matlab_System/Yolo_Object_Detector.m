@@ -22,11 +22,11 @@ classdef Yolo_Object_Detector < matlab.System
             obj.yolo = yolov4ObjectDetector(name);
 
             % Définir la longueur focale de la caméra et le point principal (exemples de valeurs)
-            obj.focalLength = [1025, 1060]; % [fx, fy]
-            obj.imageCenterPoint = [640, 364]; % [cx, cy]
+            obj.focalLength = [878, 883]; % [fx, fy]
+            obj.imageCenterPoint = [488, 363]; % [cx, cy]
 
             % Définir la taille de l'image [height, width] en pixels
-            obj.imageSize = [720, 1280];
+            obj.imageSize = [720, 960];
 
             % Charger les dimensions moyennes des objets à partir d'un fichier
             data = load('objectDimensions.mat');
@@ -151,7 +151,7 @@ classdef Yolo_Object_Detector < matlab.System
         function [out1, out2, out3, out4] = getOutputSizeImpl(~)
             % Retourner la taille de chaque port de sortie
             out1 = [4, 1]; % objectPos
-            out2 = [720, 1280, 3]; % annotatedImage (exemple de taille d'image)
+            out2 = [720, 960, 3]; % annotatedImage (exemple de taille d'image)
             out3 = [1, 2]; % bboxDimensions
             out4 = [1, 2]; % camCoordinates
         end
