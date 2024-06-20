@@ -7,9 +7,11 @@ classdef Yolo_Object_Detector < matlab.System
         objectDimensions    % Tailles moyennes des objets (hauteur, largeur, profondeur)
         targetObject        % Objet cible à détecter
         imageSize           % Taille de l'image [height, width]
-        imagecenterpoint    % Point central de l'image
+        imageCenterPoint    % Point central de l'image
         lastKnownPos        % Dernière position connue de l'objet
         intrinsicMatrix     % Matrice intrinsèque (matrice de projection)
+        objectPositions     % Positions des objets détectés
+        objectTypes         % Types des objets détectés
     end
 
     methods (Access = protected)
@@ -18,33 +20,38 @@ classdef Yolo_Object_Detector < matlab.System
             % Initialiser le détecteur YOLO
             name = 'tiny-yolov4-coco';
             obj.yolo = yolov4ObjectDetector(name);
-            
+
             % Définir la longueur focale de la caméra et le point principal (exemples de valeurs)
-            obj.focalLength = [878.5236, 883.0086];
-            obj.imagecenterpoint = [488.4168, 363.6072];
-            
+            obj.focalLength = [1025, 1060]; % [fx, fy]
+            obj.imageCenterPoint = [640, 364]; % [cx, cy]
+
             % Définir la taille de l'image [height, width] en pixels
-            obj.imageSize = [720, 960];
-            
+            obj.imageSize = [720, 1280];
+
             % Charger les dimensions moyennes des objets à partir d'un fichier
-            data = load('Matlab_System/objectDimensions.mat');
+            data = load('objectDimensions.mat');
             obj.objectDimensions = data.objectDimensions;
-            
+
             % Définir l'objet cible (initialisation)
-            obj.targetObject = 'tvmonitor'; 
-            
+            obj.targetObject = 'chair';
+
             % Initialiser la dernière position connue
-            obj.lastKnownPos = [NaN; NaN; NaN];
-            
+            obj.lastKnownPos = [NaN; NaN; NaN; NaN];  % 4x1
+
             % Définir la matrice intrinsèque (de projection) basée sur la longueur focale et le centre de l'image
-            obj.intrinsicMatrix = [obj.focalLength(1), 0, obj.imagecenterpoint(1);
-                                   0, obj.focalLength(2), obj.imagecenterpoint(2);
+            obj.intrinsicMatrix = [obj.focalLength(1), 0, obj.imageCenterPoint(1);
+                                   0, obj.focalLength(2), obj.imageCenterPoint(2);
                                    0, 0, 1];
+
+            % Initialiser les propriétés pour stocker les positions et types d'objets
+            obj.objectPositions = [];
+            obj.objectTypes = {};
         end
 
         %% Détection des objets et calcul de leurs positions
-        function [objectPos, objectType, annotatedImage] = stepImpl(obj, I)
+        function [objectPos, annotatedImage, bboxDimensions, camCoordinates] = stepImpl(obj, I, tform)
             % I : image d'entrée
+            % tform : matrice de transformation du repère caméra au repère monde (entrée)
 
             % Détecter les objets dans l'image
             [bboxs, ~, labels] = detect(obj.yolo, I, 'Threshold', 0.1);
@@ -59,31 +66,36 @@ classdef Yolo_Object_Detector < matlab.System
             bboxs = bboxs(targetIdx, :);
             labels = labels(targetIdx);
 
-            % Initialiser la position de l'objet et le type d'objet
-            objectType = "";
+            % Initialiser la position de l'objet et l'image annotée
             annotatedImage = I;
 
-            % Si aucun objet n'est détecté, retourner la dernière position connue
+            % Initialiser les sorties supplémentaires
+            bboxDimensions = [NaN, NaN]; % [w, h]
+            camCoordinates = [NaN, NaN]; % [X_cam, Z_cam]
+
+            % Si aucun objet n'est détecté, retourner la dernière position connue et NaN pour les nouvelles sorties
             if isempty(bboxs)
                 objectPos = obj.lastKnownPos;
                 return;
             end
 
-            % Si plusieurs objets sont détectés, retourner la dernière position connue
+            % Si plusieurs objets sont détectés, retourner la dernière position connue et NaN pour les nouvelles sorties
             if size(bboxs, 1) > 1
                 objectPos = obj.lastKnownPos;
                 return;
             end
-
-            % Paramètres de l'image et de la boîte englobante
-            W = obj.imageSize(2); % Largeur de l'image
-            H = obj.imageSize(1); % Hauteur de l'image
 
             % Définir les variables pour le calcul des positions
             x = bboxs(1, 1);
             y = bboxs(1, 2);
             w = bboxs(1, 3);
             h = bboxs(1, 4);
+            % Stocker les coordonnées caméra
+            camCoordinates = [x, y];
+            camCoordinates = double(camCoordinates);
+            % Stocker les dimensions de la boîte englobante
+            bboxDimensions = [w, h];
+            bboxDimensions = double(bboxDimensions);
 
             % Calcul des centres de la boîte englobante
             x_center = x + w / 2;
@@ -97,89 +109,100 @@ classdef Yolo_Object_Detector < matlab.System
                 realDepth = dimensions(3);
 
                 % Calcul de la distance D
-                Dh = (obj.focalLength(1) * realHeight) / h;
-                Dw = (obj.focalLength(1) * realWidth) / w;
+                Dh = (obj.focalLength(2) * realHeight) / h; % Utiliser fy pour la hauteur
+                Dw = (obj.focalLength(1) * realWidth) / w;  % Utiliser fx pour la largeur
                 D = (Dh + Dw) / 2;
 
                 % Ajuster la distance avec la moitié de la profondeur de l'objet
-                D = D + (realDepth / 2);
+                D = D + realDepth / 2;
 
                 % Calcul des coordonnées dans le référentiel de la caméra
-                % Utilisation de la matrice intrinsèque pour convertir les coordonnées de pixels en mètres
-                invIntrinsic = inv(obj.intrinsicMatrix);
-                pixel_coords = [x_center; y_center; 1];
-                camera_coords = invIntrinsic * (D * pixel_coords);
+                X_cam = (x_center - obj.imageCenterPoint(1)) * D / obj.focalLength(1);
+                Y_cam = (y_center - obj.imageCenterPoint(2)) * D / obj.focalLength(2);
+                Z_cam = D;  % En supposant que la caméra est alignée avec l'axe Z
 
-                X_cam = camera_coords(1);
-                Y_cam = camera_coords(2);
-                Z_cam = D;
+                % Coordonnées homogènes en espace caméra
+                point_cam = [X_cam; Y_cam; Z_cam; 1];
 
-                % Conversion des coordonnées dans le référentiel de la caméra vers celui du drone
-                % Référentiel caméra : X vers la droite, Y vers le haut, Z vers l'avant
-                % Référentiel drone : X vers l'avant, Y vers la droite, Z vers le bas
-                % Correspondance : X_drone = Z_cam, Y_drone = X_cam, Z_drone = -Y_cam
-                objectPos_cam_torefdrone = [Z_cam; X_cam; -Y_cam];
-                
-                % Transformation en coordonnées du drone
-                objectPos = objectPos_cam_torefdrone;
-                objectPos = double(objectPos);  % S'assurer que objectPos est de type double
+                % Transformation vers le référentiel monde
+                objectPos = tform * point_cam;
+
+                % Assurez-vous que objectPos est [4, 1]
+                objectPos = double([objectPos(1:3); 1]);  % Assurez-vous que objectPos est 4x1
 
                 % Annoter l'image avec la distance et la position
                 label = sprintf('%s (%.2f m, [%.2f, %.2f, %.2f])', obj.targetObject, D, objectPos(1), objectPos(2), objectPos(3));
                 annotatedImage = insertObjectAnnotation(I, "rectangle", bboxs(1, :), label, 'Color', 'yellow');
                 
-                % Définir le type d'objet
-                objectType = string(obj.targetObject);  % S'assurer que objectType est de type string
-                
                 % Mettre à jour la dernière position connue
                 obj.lastKnownPos = objectPos;
+
+                % Enregistrer la position et le type de l'objet détecté
+                obj.objectPositions = [obj.objectPositions; objectPos(1:3)'];
+                obj.objectTypes{end+1} = obj.targetObject;
             end
+
+            % Sauvegarder les données dans le workspace
+            assignin('base', 'objectPositions', obj.objectPositions);
+            assignin('base', 'objectTypes', obj.objectTypes);
         end
 
         %% Définir les tailles des sorties
-        function [out1, out2, out3] = getOutputSizeImpl(~)
+        function [out1, out2, out3, out4] = getOutputSizeImpl(~)
             % Retourner la taille de chaque port de sortie
-            out1 = [3, 1]; % objectPos
-            out2 = [1, 1]; % objectType
-            out3 = [720, 960, 3]; % annotatedImage (exemple de taille d'image)
+            out1 = [4, 1]; % objectPos
+            out2 = [720, 1280, 3]; % annotatedImage (exemple de taille d'image)
+            out3 = [1, 2]; % bboxDimensions
+            out4 = [1, 2]; % camCoordinates
         end
 
         %% Définir les types de données des sorties
-        function [out1, out2, out3] = getOutputDataTypeImpl(~)
+        function [out1, out2, out3, out4] = getOutputDataTypeImpl(~)
             % Retourner le type de données de chaque port de sortie
             out1 = 'double'; % objectPos
-            out2 = 'string'; % objectType
-            out3 = 'uint8'; % annotatedImage
+            out2 = 'uint8'; % annotatedImage
+            out3 = 'double'; % bboxDimensions
+            out4 = 'double'; % camCoordinates
         end
 
         %% Définir si les sorties sont complexes
-        function [out1, out2, out3] = isOutputComplexImpl(~)
+        function [out1, out2, out3, out4] = isOutputComplexImpl(~)
             % Retourner vrai pour chaque port de sortie avec des données complexes
             out1 = false; % objectPos
-            out2 = false; % objectType
-            out3 = false; % annotatedImage
+            out2 = false; % annotatedImage
+            out3 = false; % bboxDimensions
+            out4 = false; % camCoordinates
         end
 
         %% Définir si les tailles des sorties sont fixes
-        function [out1, out2, out3] = isOutputFixedSizeImpl(~)
+        function [out1, out2, out3, out4] = isOutputFixedSizeImpl(~)
             % Retourner vrai pour chaque port de sortie avec une taille fixe
             out1 = true; % objectPos
-            out2 = true; % objectType
-            out3 = true; % annotatedImage
+            out2 = true; % annotatedImage
+            out3 = true; % bboxDimensions
+            out4 = true; % camCoordinates
         end
 
         %% Définir les noms des ports d'entrée
-        function [name1] = getInputNamesImpl(~)
+        function [name1, name2] = getInputNamesImpl(~)
             % Retourner les noms des ports d'entrée pour le bloc système
             name1 = 'Image';
+            name2 = 'Tform';
         end
 
         %% Définir les noms des ports de sortie
-        function [name1, name2, name3] = getOutputNamesImpl(~)
+        function [name1, name2, name3, name4] = getOutputNamesImpl(~)
             % Retourner les noms des ports de sortie pour le bloc système
             name1 = 'ObjectPos';
-            name2 = 'ObjectType';
-            name3 = 'AnnotatedImage';
+            name2 = 'AnnotatedImage';
+            name3 = 'BBoxDimensions';
+            name4 = 'CamCoordinates';
+        end
+
+        %% Définir le temps d'échantillonnage
+        function sts = getSampleTimeImpl(obj)
+            % Définir le type de temps d'échantillonnage
+            sts = createSampleTime(obj, 'Type', 'Discrete', 'SampleTime', 1);
         end
     end
 end
