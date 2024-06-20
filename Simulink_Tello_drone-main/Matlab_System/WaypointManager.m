@@ -45,7 +45,7 @@ classdef WaypointManager < matlab.System
                 
                 % Si la distance est acceptable ou qu'on force le prochain
                 % waypoint
-                if errorPos <= lookaheadDistance || (obj.PrvForceNextWaypoint ~= forceNextWaypoint && forceNextWaypoint == 1)
+                if (errorPos <= lookaheadDistance && obj.ElapsedTimeWaypoint >= requiredTime) || (obj.PrvForceNextWaypoint ~= forceNextWaypoint && forceNextWaypoint == 1)
                     
                     % On incrémente le temps passé sur le waypoint
                     obj.ElapsedTimedWaypoint = obj.ElapsedTimedWaypoint + sampleTime;
