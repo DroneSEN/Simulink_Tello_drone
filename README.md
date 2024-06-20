@@ -1,4 +1,4 @@
-# Tello eduo control on Simulink%
+# Tello Edu control software on Simulink
 
 ## Setup the project
 
