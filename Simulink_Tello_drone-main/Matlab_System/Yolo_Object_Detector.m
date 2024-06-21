@@ -33,7 +33,7 @@ classdef Yolo_Object_Detector < matlab.System
             obj.objectDimensions = data.objectDimensions;
 
             % Définir l'objet cible (initialisation)
-            obj.targetObject = 'chair';
+            obj.targetObject = 'tvmonitor';
 
             % Initialiser la dernière position connue
             obj.lastKnownPos = [NaN; NaN; NaN; NaN];  % 4x1
@@ -49,7 +49,7 @@ classdef Yolo_Object_Detector < matlab.System
         end
 
         %% Détection des objets et calcul de leurs positions
-        function [objectPos, annotatedImage, bboxDimensions, camCoordinates] = stepImpl(obj, I, tform)
+        function [objectPos, annotatedImage, bboxDimensions, camCoordinates, point_cam, point_cam_todrone] = stepImpl(obj, I)
             % I : image d'entrée
             % tform : matrice de transformation du repère caméra au repère monde (entrée)
 
@@ -72,6 +72,8 @@ classdef Yolo_Object_Detector < matlab.System
             % Initialiser les sorties supplémentaires
             bboxDimensions = [NaN, NaN]; % [w, h]
             camCoordinates = [NaN, NaN]; % [X_cam, Z_cam]
+            point_cam = [NaN; NaN; NaN; NaN];
+            point_cam_todrone = [NaN; NaN; NaN; NaN];
 
             % Si aucun objet n'est détecté, retourner la dernière position connue et NaN pour les nouvelles sorties
             if isempty(bboxs)
@@ -90,9 +92,11 @@ classdef Yolo_Object_Detector < matlab.System
             y = bboxs(1, 2);
             w = bboxs(1, 3);
             h = bboxs(1, 4);
+
             % Stocker les coordonnées caméra
             camCoordinates = [x, y];
             camCoordinates = double(camCoordinates);
+
             % Stocker les dimensions de la boîte englobante
             bboxDimensions = [w, h];
             bboxDimensions = double(bboxDimensions);
@@ -114,73 +118,84 @@ classdef Yolo_Object_Detector < matlab.System
                 D = (Dh + Dw) / 2;
 
                 % Ajuster la distance avec la moitié de la profondeur de l'objet
-                D = D + realDepth / 2;
+                Distance = D + realDepth / 2;
 
                 % Calcul des coordonnées dans le référentiel de la caméra
-                X_cam = (x_center - obj.imageCenterPoint(1)) * D / obj.focalLength(1);
-                Y_cam = (y_center - obj.imageCenterPoint(2)) * D / obj.focalLength(2);
-                Z_cam = D;  % En supposant que la caméra est alignée avec l'axe Z
+                X_cam = (x_center - obj.imageCenterPoint(1)) * Distance / obj.focalLength(1);
+                Y_cam = (y_center - obj.imageCenterPoint(2)) * Distance / obj.focalLength(2);
+                Z_cam = -Distance;  % En supposant que la caméra est alignée avec l'axe Z
 
-                % Coordonnées homogènes en espace caméra
                 point_cam = [X_cam; Y_cam; Z_cam; 1];
 
-                % Transformation vers le référentiel monde
-                objectPos = tform * point_cam;
+                % Coordonnées homogènes en espace caméra
+                point_cam_todrone = [-Z_cam; X_cam; -Y_cam; 1];
 
-                % Assurez-vous que objectPos est [4, 1]
-                objectPos = double([objectPos(1:3); 1]);  % Assurez-vous que objectPos est 4x1
+                % Transformation vers le référentiel monde
+                point_cam = double([point_cam(1:3); 1]);  % Assurez-vous que point_cam est 4x1
+                point_cam_todrone = double([point_cam_todrone(1:3); 1]);  % Assurez-vous que point_cam_todrone est 4x1
 
                 % Annoter l'image avec la distance et la position
-                label = sprintf('%s (%.2f m, [%.2f, %.2f, %.2f])', obj.targetObject, D, objectPos(1), objectPos(2), objectPos(3));
+                label = sprintf('%s (%.2f m, [%.2f, %.2f, %.2f])', obj.targetObject, D, point_cam_todrone(1), point_cam_todrone(2), point_cam_todrone(3));
                 annotatedImage = insertObjectAnnotation(I, "rectangle", bboxs(1, :), label, 'Color', 'yellow');
                 
                 % Mettre à jour la dernière position connue
-                obj.lastKnownPos = objectPos;
+                obj.lastKnownPos = point_cam_todrone;
 
                 % Enregistrer la position et le type de l'objet détecté
-                obj.objectPositions = [obj.objectPositions; objectPos(1:3)'];
-                obj.objectTypes{end+1} = obj.targetObject;
+                % obj.objectPositions = [obj.objectPositions; objectPos(1:3)'];
+                % obj.objectTypes{end+1} = obj.targetObject;
             end
 
             % Sauvegarder les données dans le workspace
             assignin('base', 'objectPositions', obj.objectPositions);
             assignin('base', 'objectTypes', obj.objectTypes);
+            
+            % Retourner la position mise à jour
+            objectPos = obj.lastKnownPos;
         end
 
         %% Définir les tailles des sorties
-        function [out1, out2, out3, out4] = getOutputSizeImpl(~)
+        function [out1, out2, out3, out4, point_cam, point_cam_todrone] = getOutputSizeImpl(~)
             % Retourner la taille de chaque port de sortie
             out1 = [4, 1]; % objectPos
             out2 = [720, 960, 3]; % annotatedImage (exemple de taille d'image)
             out3 = [1, 2]; % bboxDimensions
             out4 = [1, 2]; % camCoordinates
+            point_cam = [4, 1];
+            point_cam_todrone =  [4, 1]; 
         end
 
         %% Définir les types de données des sorties
-        function [out1, out2, out3, out4] = getOutputDataTypeImpl(~)
+        function [out1, out2, out3, out4, point_cam, point_cam_todrone] = getOutputDataTypeImpl(~)
             % Retourner le type de données de chaque port de sortie
             out1 = 'double'; % objectPos
             out2 = 'uint8'; % annotatedImage
             out3 = 'double'; % bboxDimensions
             out4 = 'double'; % camCoordinates
+            point_cam = 'double';
+            point_cam_todrone = 'double';
         end
 
         %% Définir si les sorties sont complexes
-        function [out1, out2, out3, out4] = isOutputComplexImpl(~)
+        function [out1, out2, out3, out4, point_cam, point_cam_todrone] = isOutputComplexImpl(~)
             % Retourner vrai pour chaque port de sortie avec des données complexes
             out1 = false; % objectPos
             out2 = false; % annotatedImage
             out3 = false; % bboxDimensions
             out4 = false; % camCoordinates
+            point_cam = false;
+            point_cam_todrone = false;
         end
 
         %% Définir si les tailles des sorties sont fixes
-        function [out1, out2, out3, out4] = isOutputFixedSizeImpl(~)
+        function [out1, out2, out3, out4, point_cam, point_cam_todrone] = isOutputFixedSizeImpl(~)
             % Retourner vrai pour chaque port de sortie avec une taille fixe
             out1 = true; % objectPos
             out2 = true; % annotatedImage
             out3 = true; % bboxDimensions
             out4 = true; % camCoordinates
+            point_cam = true;
+            point_cam_todrone = true;
         end
 
         %% Définir les noms des ports d'entrée
@@ -191,12 +206,14 @@ classdef Yolo_Object_Detector < matlab.System
         end
 
         %% Définir les noms des ports de sortie
-        function [name1, name2, name3, name4] = getOutputNamesImpl(~)
+        function [name1, name2, name3, name4, point_cam, point_cam_todrone] = getOutputNamesImpl(~)
             % Retourner les noms des ports de sortie pour le bloc système
             name1 = 'ObjectPos';
             name2 = 'AnnotatedImage';
             name3 = 'BBoxDimensions';
             name4 = 'CamCoordinates';
+            point_cam = 'posecam';
+            point_cam_todrone = 'posecamtodrone';
         end
 
         %% Définir le temps d'échantillonnage
