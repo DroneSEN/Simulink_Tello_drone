@@ -123,12 +123,19 @@ classdef Yolo_Object_Detector < matlab.System
                 % Calcul des coordonnées dans le référentiel de la caméra
                 X_cam = (x_center - obj.imageCenterPoint(1)) * Distance / obj.focalLength(1);
                 Y_cam = (y_center - obj.imageCenterPoint(2)) * Distance / obj.focalLength(2);
-                Z_cam = -Distance;  % En supposant que la caméra est alignée avec l'axe Z
+                Z_cam = Distance;  % En supposant que la caméra est alignée avec l'axe Z
+                
+                %Coordonnées camera (fait avec maxime)
+                %point_cam = [X_cam; Y_cam; -Z_cam; 1];
 
+                %Coordonnées camera selon model camera pinhole
                 point_cam = [X_cam; Y_cam; Z_cam; 1];
 
-                % Coordonnées homogènes en espace caméra
-                point_cam_todrone = [-Z_cam; X_cam; -Y_cam; 1];
+                %Coordonnées camtodrone selon model camera pinhole
+                point_cam_todrone = [Z_cam; X_cam; Y_cam; 1];
+
+                % Coordonnées camtodrone (fait avec maxime) 
+                %point_cam_todrone = [-Z_cam; X_cam; -Y_cam; 1];
 
                 % Transformation vers le référentiel monde
                 point_cam = double([point_cam(1:3); 1]);  % Assurez-vous que point_cam est 4x1
