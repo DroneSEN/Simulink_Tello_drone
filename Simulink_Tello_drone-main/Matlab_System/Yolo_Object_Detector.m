@@ -12,6 +12,7 @@ classdef Yolo_Object_Detector < matlab.System
         intrinsicMatrix     % Matrice intrinsèque (matrice de projection)
         objectPositions     % Positions des objets détectés
         objectTypes         % Types des objets détectés
+        intrinsics;
     end
 
     methods (Access = protected)
@@ -37,6 +38,7 @@ classdef Yolo_Object_Detector < matlab.System
 
             % Initialiser la dernière position connue
             obj.lastKnownPos = [NaN; NaN; NaN; NaN];  % 4x1
+            obj.intrinsics = cameraIntrinsics(obj.focalLength, obj.imageCenterPoint, obj.imageSize);
 
             % Définir la matrice intrinsèque (de projection) basée sur la longueur focale et le centre de l'image
             obj.intrinsicMatrix = [obj.focalLength(1), 0, obj.imageCenterPoint(1);
@@ -52,6 +54,8 @@ classdef Yolo_Object_Detector < matlab.System
         function [objectPos, annotatedImage, bboxDimensions, camCoordinates, point_cam, point_cam_todrone] = stepImpl(obj, I)
             % I : image d'entrée
             % tform : matrice de transformation du repère caméra au repère monde (entrée)
+
+            I = undistortImage(I, obj.intrinsics);
 
             % Détecter les objets dans l'image
             [bboxs, ~, labels] = detect(obj.yolo, I, 'Threshold', 0.1);
