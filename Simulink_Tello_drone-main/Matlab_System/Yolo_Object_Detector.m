@@ -51,7 +51,7 @@ classdef Yolo_Object_Detector < matlab.System
         end
 
         %% Détection des objets et calcul de leurs positions
-        function [objectPos, annotatedImage, bboxDimensions, camCoordinates, point_cam, point_cam_todrone] = stepImpl(obj, I)
+        function [Tform, annotatedImage, bboxDimensions, camCoordinates, point_cam, objectlastPos_refdrone] = stepImpl(obj, I)
             % I : image d'entrée
             % tform : matrice de transformation du repère caméra au repère monde (entrée)
 
@@ -78,16 +78,17 @@ classdef Yolo_Object_Detector < matlab.System
             camCoordinates = [NaN, NaN]; % [X_cam, Z_cam]
             point_cam = [NaN; NaN; NaN; NaN];
             point_cam_todrone = [NaN; NaN; NaN; NaN];
+            Tform = [NaN,NaN,NaN,NaN; NaN,NaN,NaN,NaN; NaN,NaN,NaN,NaN; NaN,NaN,NaN,NaN]
 
             % Si aucun objet n'est détecté, retourner la dernière position connue et NaN pour les nouvelles sorties
             if isempty(bboxs)
-                objectPos = obj.lastKnownPos;
+                objectlastPos_refdrone = obj.lastKnownPos;
                 return;
             end
 
             % Si plusieurs objets sont détectés, retourner la dernière position connue et NaN pour les nouvelles sorties
             if size(bboxs, 1) > 1
-                objectPos = obj.lastKnownPos;
+                objectlastPos_refdrone = obj.lastKnownPos;
                 return;
             end
 
@@ -132,7 +133,7 @@ classdef Yolo_Object_Detector < matlab.System
 
                 %Coordonnées camera selon model camera pinhole
                 point_cam = [X_cam; Y_cam; Z_cam; 1];
-                theta = -10 * pi / 180;  % Exemple d'inclinaison de 10 degrés vers le bas
+                theta = -10 * pi / 180;  %inclinaison cam de 10 degrés vers le bas
                 Rx = [1 0 0 0; 0 cos(theta) -sin(theta) 0; 0 sin(theta) cos(theta) 0; 0 0 0 1];  % Matrice de rotation X
                 P = [0 0 1 0; 1 0 0 0; 0 1 0 0; 0 0 0 1];  % Matrice de permutation
                 Tform = P * Rx;  % Combinaison de la rotation et de la permutation
@@ -155,13 +156,13 @@ classdef Yolo_Object_Detector < matlab.System
             end
             
             % Retourner la position mise à jour
-            objectPos = obj.lastKnownPos;
+            objectlastPos_refdrone = obj.lastKnownPos;
         end
 
         %% Définir les tailles des sorties
-        function [out1, out2, out3, out4, point_cam, point_cam_todrone] = getOutputSizeImpl(~)
+        function [Tform, out2, out3, out4, point_cam, point_cam_todrone] = getOutputSizeImpl(~)
             % Retourner la taille de chaque port de sortie
-            out1 = [4, 1]; % objectPos
+            Tform = [4, 4]; % Tform camtodrone
             out2 = [720, 960, 3]; % annotatedImage (exemple de taille d'image)
             out3 = [1, 2]; % bboxDimensions
             out4 = [1, 2]; % camCoordinates
@@ -170,9 +171,9 @@ classdef Yolo_Object_Detector < matlab.System
         end
 
         %% Définir les types de données des sorties
-        function [out1, out2, out3, out4, point_cam, point_cam_todrone] = getOutputDataTypeImpl(~)
+        function [Tform, out2, out3, out4, point_cam, point_cam_todrone] = getOutputDataTypeImpl(~)
             % Retourner le type de données de chaque port de sortie
-            out1 = 'double'; % objectPos
+            Tform = 'double'; % Tform camtodrone
             out2 = 'uint8'; % annotatedImage
             out3 = 'double'; % bboxDimensions
             out4 = 'double'; % camCoordinates
@@ -181,9 +182,9 @@ classdef Yolo_Object_Detector < matlab.System
         end
 
         %% Définir si les sorties sont complexes
-        function [out1, out2, out3, out4, point_cam, point_cam_todrone] = isOutputComplexImpl(~)
+        function [Tform, out2, out3, out4, point_cam, point_cam_todrone] = isOutputComplexImpl(~)
             % Retourner vrai pour chaque port de sortie avec des données complexes
-            out1 = false; % objectPos
+            Tform = false; %Tform camtodrone
             out2 = false; % annotatedImage
             out3 = false; % bboxDimensions
             out4 = false; % camCoordinates
@@ -192,9 +193,9 @@ classdef Yolo_Object_Detector < matlab.System
         end
 
         %% Définir si les tailles des sorties sont fixes
-        function [out1, out2, out3, out4, point_cam, point_cam_todrone] = isOutputFixedSizeImpl(~)
+        function [Tform, out2, out3, out4, point_cam, point_cam_todrone] = isOutputFixedSizeImpl(~)
             % Retourner vrai pour chaque port de sortie avec une taille fixe
-            out1 = true; % objectPos
+            Tform = true; % Tform camtodrone
             out2 = true; % annotatedImage
             out3 = true; % bboxDimensions
             out4 = true; % camCoordinates
@@ -210,9 +211,9 @@ classdef Yolo_Object_Detector < matlab.System
         end
 
         %% Définir les noms des ports de sortie
-        function [name1, name2, name3, name4, point_cam, point_cam_todrone] = getOutputNamesImpl(~)
+        function [Tform, name2, name3, name4, point_cam, point_cam_todrone] = getOutputNamesImpl(~)
             % Retourner les noms des ports de sortie pour le bloc système
-            name1 = 'ObjectPos';
+            Tform = 'Tform_camtodrone';
             name2 = 'AnnotatedImage';
             name3 = 'BBoxDimensions';
             name4 = 'CamCoordinates';
@@ -223,7 +224,7 @@ classdef Yolo_Object_Detector < matlab.System
         %% Définir le temps d'échantillonnage
         function sts = getSampleTimeImpl(obj)
             % Définir le type de temps d'échantillonnage
-            sts = createSampleTime(obj, 'Type', 'Discrete', 'SampleTime', 1);
+            sts = createSampleTime(obj, 'Type', 'Discrete', 'SampleTime', 0.1);
         end
     end
 end
