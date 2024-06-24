@@ -129,17 +129,18 @@ classdef Yolo_Object_Detector < matlab.System
                 Y_cam = (y_center - obj.imageCenterPoint(2)) * Distance / obj.focalLength(2);
                 Z_cam = Distance;  % En supposant que la caméra est alignée avec l'axe Z
                 
-                %Coordonnées camera (fait avec maxime)
-                %point_cam = [X_cam; Y_cam; -Z_cam; 1];
 
                 %Coordonnées camera selon model camera pinhole
                 point_cam = [X_cam; Y_cam; Z_cam; 1];
+                theta = -10 * pi / 180;  % Exemple d'inclinaison de 10 degrés vers le bas
+                Rx = [1 0 0 0; 0 cos(theta) -sin(theta) 0; 0 sin(theta) cos(theta) 0; 0 0 0 1];  % Matrice de rotation X
+                P = [0 0 1 0; 1 0 0 0; 0 1 0 0; 0 0 0 1];  % Matrice de permutation
+                Tform = P * Rx;  % Combinaison de la rotation et de la permutation
 
                 %Coordonnées camtodrone selon model camera pinhole
-                point_cam_todrone = [Z_cam; X_cam; Y_cam; 1];
-
-                % Coordonnées camtodrone (fait avec maxime) 
-                %point_cam_todrone = [-Z_cam; X_cam; -Y_cam; 1];
+                %point_cam_todrone = [Z_cam; X_cam; Y_cam; 1];
+                % Application de la transformation de la caméra au drone
+                point_cam_todrone = Tform * point_cam;
 
                 % Transformation vers le référentiel monde
                 point_cam = double([point_cam(1:3); 1]);  % Assurez-vous que point_cam est 4x1
@@ -151,15 +152,7 @@ classdef Yolo_Object_Detector < matlab.System
                 
                 % Mettre à jour la dernière position connue
                 obj.lastKnownPos = point_cam_todrone;
-
-                % Enregistrer la position et le type de l'objet détecté
-                % obj.objectPositions = [obj.objectPositions; objectPos(1:3)'];
-                % obj.objectTypes{end+1} = obj.targetObject;
             end
-
-            % Sauvegarder les données dans le workspace
-            assignin('base', 'objectPositions', obj.objectPositions);
-            assignin('base', 'objectTypes', obj.objectTypes);
             
             % Retourner la position mise à jour
             objectPos = obj.lastKnownPos;
