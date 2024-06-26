@@ -13,6 +13,7 @@ classdef Yolo_Object_Detector < matlab.System
         objectPositions     % Positions des objets détectés
         objectTypes         % Types des objets détectés
         intrinsics;
+        degreecam;
     end
 
     methods (Access = protected)
@@ -44,14 +45,13 @@ classdef Yolo_Object_Detector < matlab.System
             obj.intrinsicMatrix = [obj.focalLength(1), 0, obj.imageCenterPoint(1);
                                    0, obj.focalLength(2), obj.imageCenterPoint(2);
                                    0, 0, 1];
-
             % Initialiser les propriétés pour stocker les positions et types d'objets
             obj.objectPositions = [];
             obj.objectTypes = {};
         end
 
         %% Détection des objets et calcul de leurs positions
-        function [Tform, annotatedImage, bboxDimensions, camCoordinates, point_cam, objectlastPos_refdrone] = stepImpl(obj, I)
+        function [Tform, annotatedImage, bboxDimensions, camCoordinates, point_cam, point_cam_todrone] = stepImpl(obj, I, degreecam)
             % I : image d'entrée
             % tform : matrice de transformation du repère caméra au repère monde (entrée)
 
@@ -68,17 +68,17 @@ classdef Yolo_Object_Detector < matlab.System
             % Filtrer les détections pour ne garder que l'objet cible
             targetIdx = strcmp(labels, obj.targetObject);
             bboxs = bboxs(targetIdx, :);
-            labels = labels(targetIdx);
+            % labels = labels(targetIdx);
 
             % Initialiser la position de l'objet et l'image annotée
             annotatedImage = I;
 
-            % Initialiser les sorties supplémentaires
+            % % Initialiser les sorties supplémentaires
             bboxDimensions = [NaN, NaN]; % [w, h]
             camCoordinates = [NaN, NaN]; % [X_cam, Z_cam]
             point_cam = [NaN; NaN; NaN; NaN];
             point_cam_todrone = [NaN; NaN; NaN; NaN];
-            Tform = [NaN,NaN,NaN,NaN; NaN,NaN,NaN,NaN; NaN,NaN,NaN,NaN; NaN,NaN,NaN,NaN]
+            Tform = [NaN,NaN,NaN,NaN; NaN,NaN,NaN,NaN; NaN,NaN,NaN,NaN; NaN,NaN,NaN,NaN];
 
             % Si aucun objet n'est détecté, retourner la dernière position connue et NaN pour les nouvelles sorties
             if isempty(bboxs)
@@ -133,13 +133,11 @@ classdef Yolo_Object_Detector < matlab.System
 
                 %Coordonnées camera selon model camera pinhole
                 point_cam = [X_cam; Y_cam; Z_cam; 1];
-                theta = -10 * pi / 180;  %inclinaison cam de 10 degrés vers le bas
+                theta = -degreecam * pi / 180;  %inclinaison cam de 10 degrés vers le bas
                 Rx = [1 0 0 0; 0 cos(theta) -sin(theta) 0; 0 sin(theta) cos(theta) 0; 0 0 0 1];  % Matrice de rotation X
                 P = [0 0 1 0; 1 0 0 0; 0 1 0 0; 0 0 0 1];  % Matrice de permutation
                 Tform = P * Rx;  % Combinaison de la rotation et de la permutation
 
-                %Coordonnées camtodrone selon model camera pinhole
-                %point_cam_todrone = [Z_cam; X_cam; Y_cam; 1];
                 % Application de la transformation de la caméra au drone
                 point_cam_todrone = Tform * point_cam;
 
@@ -154,8 +152,10 @@ classdef Yolo_Object_Detector < matlab.System
                 % Mettre à jour la dernière position connue
                 obj.lastKnownPos = point_cam_todrone;
             end
-            
-            % Retourner la position mise à jour
+            assignin('base', 'objectPositions', obj.objectPositions);
+            assignin('base', 'objectTypes', obj.objectTypes);
+            assignin('base', 'lastKnownPos', obj.lastKnownPos);
+            % % Retourner la position mise à jour
             objectlastPos_refdrone = obj.lastKnownPos;
         end
 
@@ -204,10 +204,10 @@ classdef Yolo_Object_Detector < matlab.System
         end
 
         %% Définir les noms des ports d'entrée
-        function [name1, name2] = getInputNamesImpl(~)
+        function [name1, degreecam] = getInputNamesImpl(~)
             % Retourner les noms des ports d'entrée pour le bloc système
             name1 = 'Image';
-            name2 = 'Tform';
+            degreecam = 'degreecam';
         end
 
         %% Définir les noms des ports de sortie
