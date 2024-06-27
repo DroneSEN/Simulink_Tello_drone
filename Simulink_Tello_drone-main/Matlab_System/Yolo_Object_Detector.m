@@ -34,12 +34,16 @@ classdef Yolo_Object_Detector < matlab.System
             data = load('objectDimensions.mat');
             obj.objectDimensions = data.objectDimensions;
 
+            % Configuration des paramètres intrinsèques de la caméra avec les propriétés fournies
+            load("camera_calibration\Camera_calibration_mat\export_9BA13B_front.mat");
+            obj.intrinsics = export_cameraParams_9BA13B.Intrinsics;
+
             % Définir l'objet cible (initialisation)
             obj.targetObject = 'tvmonitor';
 
             % Initialiser la dernière position connue
             obj.lastKnownPos = [NaN; NaN; NaN; NaN];  % 4x1
-            obj.intrinsics = cameraIntrinsics(obj.focalLength, obj.imageCenterPoint, obj.imageSize);
+            %obj.intrinsics = cameraIntrinsics(obj.focalLength, obj.imageCenterPoint, obj.imageSize);
 
             % Définir la matrice intrinsèque (de projection) basée sur la longueur focale et le centre de l'image
             obj.intrinsicMatrix = [obj.focalLength(1), 0, obj.imageCenterPoint(1);
@@ -58,7 +62,7 @@ classdef Yolo_Object_Detector < matlab.System
             I = undistortImage(I, obj.intrinsics);
 
             % Détecter les objets dans l'image
-            [bboxs, ~, labels] = detect(obj.yolo, I, 'Threshold', 0.1);
+            [bboxs, ~, labels] = detect(obj.yolo, I, 'Threshold', 0.3);
 
             % Convertir les labels en tableau de cellules si nécessaire
             if ~iscell(labels)
@@ -152,9 +156,7 @@ classdef Yolo_Object_Detector < matlab.System
                 % Mettre à jour la dernière position connue
                 obj.lastKnownPos = point_cam_todrone;
             end
-            assignin('base', 'objectPositions', obj.objectPositions);
-            assignin('base', 'objectTypes', obj.objectTypes);
-            assignin('base', 'lastKnownPos', obj.lastKnownPos);
+            % assignin('base', 'objectTypes', obj.objectTypes);
             % % Retourner la position mise à jour
             objectlastPos_refdrone = obj.lastKnownPos;
         end
