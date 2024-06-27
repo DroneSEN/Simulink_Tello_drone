@@ -7,7 +7,7 @@ clear;
 camera_dir = VideoDirection.Downward;
 
 % Nom du drone à calibrer
-DroneName = '9BA074';
+DroneName = '9BA0DC';
 
 
 % =========================================================================
@@ -39,6 +39,11 @@ answer = questdlg('Start calibration ?', 'Yes', 'Cancel');
 if strcmp(answer,'Yes')
     for k=1:30
         Image = snapshot(TelloCamera);
+
+        if camera_dir == VideoDirection.Downward
+            Image = flip(transpose(Image(:,:,1)), 2);
+        end
+
         file_name = sprintf('Image%d.png',k);
         imgName = fullfile(ImageFolder,file_name);
         if ~isempty(Image)
