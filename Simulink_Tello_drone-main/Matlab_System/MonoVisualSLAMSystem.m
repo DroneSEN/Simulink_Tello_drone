@@ -11,46 +11,29 @@ classdef MonoVisualSLAMSystem < matlab.System
         ImageSize = [360, 480];
         
         % ScaleFactor Facteur de mise à l'échelle pour la pyramide d'images
-        % Augmenter : Moins de niveaux de la pyramide, plus rapide, mais moins précis.
-        % Diminuer : Plus de niveaux de la pyramide, plus précis, mais plus lent.
         ScaleFactor = 1.2;
         
         % NumLevels Nombre de niveaux de la pyramide
-        % Augmenter : Meilleure détection des caractéristiques à différentes échelles, mais plus lent.
-        % Diminuer : Moins de niveaux à traiter, plus rapide, mais moins robuste aux variations d'échelle.
         NumLevels = 5;
         
         % MaxNumPoints Nombre maximum de points de caractéristiques
-        % Augmenter : Meilleure précision de suivi, mais plus de calculs, plus lent.
-        % Diminuer : Moins de points à traiter, plus rapide, mais moins précis.
         MaxNumPoints = 1000;
         
         % SkipMaxFrames Nombre maximum de trames à sauter
-        % Augmenter : Moins de trames traitées, plus rapide, mais moins de mises à jour de la pose.
-        % Diminuer : Plus de trames traitées, meilleure réactivité, mais plus lent.
         SkipMaxFrames = 20;
         
         % TrackFeatureRange Plage de suivi des caractéristiques
-        % Augmenter : Plage plus large, améliore la robustesse au suivi, mais plus de calculs.
-        % Diminuer : Plage plus étroite, réduit les calculs, mais moins robuste.
         TrackFeatureRange = [50, 120];
         
         % LoopClosureThreshold Seuil de fermeture de boucle
-        % Augmenter : Plus strict, moins de fausses détections de boucle, mais peut manquer de vraies boucles.
-        % Diminuer : Plus permissif, plus de détections de boucle, mais risque de fausses détections.
         LoopClosureThreshold = 50;
         
         % Verbose Mode verbeux
-        % true : Affiche les messages de débogage, utile pour le développement, mais peut ralentir.
-        % false : Aucun message de débogage, performances améliorées.
         Verbose = false;
         
         % ThreadLevel Niveau de parallélisme
-        % Augmenter : Utilise plus de cœurs du processeur, améliore les performances si les cœurs sont disponibles.
-        % Diminuer : Utilise moins de cœurs, peut réduire les performances si les cœurs sont disponibles.
         ThreadLevel = 8;
     end
-
 
     % Constantes pré-calculées
     properties(Access = private)
@@ -72,28 +55,34 @@ classdef MonoVisualSLAMSystem < matlab.System
             % Effectue les calculs nécessaires une seule fois, tels que le calcul des constantes
             intrinsics = cameraIntrinsics(obj.FocalLength, obj.PrincipalPoint, obj.ImageSize);
             obj.VslamObj = monovslam(intrinsics, ...
-                                     ScaleFactor=obj.ScaleFactor, ...
-                                     NumLevels=obj.NumLevels, ...
-                                     MaxNumPoints=obj.MaxNumPoints, ...
-                                     SkipMaxFrames=obj.SkipMaxFrames, ...
-                                     TrackFeatureRange=obj.TrackFeatureRange, ...
-                                     LoopClosureThreshold=obj.LoopClosureThreshold, ...
-                                     Verbose=obj.Verbose, ...
-                                     ThreadLevel=obj.ThreadLevel);
+                                     'ScaleFactor', obj.ScaleFactor, ...
+                                     'NumLevels', obj.NumLevels, ...
+                                     'MaxNumPoints', obj.MaxNumPoints, ...
+                                     'SkipMaxFrames', obj.SkipMaxFrames, ...
+                                     'TrackFeatureRange', obj.TrackFeatureRange, ...
+                                     'LoopClosureThreshold', obj.LoopClosureThreshold, ...
+                                     'Verbose', obj.Verbose, ...
+                                     'ThreadLevel', obj.ThreadLevel);
             obj.Pose = eye(4); % Initialisation de la matrice de pose
         end
 
         function [pose, isTrackingLost, xyzPoints] = stepImpl(obj, I)
             % Implémente l'algorithme. Calcule la pose en fonction de l'image d'entrée I.
             addFrame(obj.VslamObj, I);
+            
             if hasNewKeyFrame(obj.VslamObj)
-                [camPoses, ~] = poses(obj.VslamObj);
-                p = camPoses(end);
-                obj.Pose = p.A;
+                posesStruct = poses(obj.VslamObj);
+                obj.Pose = posesStruct(end).T;
             end
-            pose = obj.Pose;
+            
             isTrackingLost = ~uint8(checkStatus(obj.VslamObj));
             xyzPoints = mapPoints(obj.VslamObj);
+            pose = obj.Pose;
+            
+            % Assigner les résultats à l'espace de travail de base
+            translation_matrix = pose(1:3, 4);
+            assignin('base', 'objectPositions', translation_matrix);
+            assignin('base', 'slamPoints', xyzPoints);
         end
 
         function resetImpl(obj)
@@ -105,11 +94,15 @@ classdef MonoVisualSLAMSystem < matlab.System
         function s = saveObjectImpl(obj)
             % Sauvegarde l'objet
             s = saveObjectImpl@matlab.System(obj);
+            s.VslamObj = obj.VslamObj;
+            s.Pose = obj.Pose;
         end
 
         function loadObjectImpl(obj, s, wasLocked)
             % Charge l'objet
             loadObjectImpl@matlab.System(obj, s, wasLocked);
+            obj.VslamObj = s.VslamObj;
+            obj.Pose = s.Pose;
         end
 
         %% Fonctions Simulink
@@ -123,7 +116,7 @@ classdef MonoVisualSLAMSystem < matlab.System
         function [out1, out2, out3] = getOutputDataTypeImpl(obj)
             % Retourne le type de données pour chaque port de sortie
             out1 = 'double';
-            out2 = 'boolean';
+            out2 = 'logical';
             out3 = 'double';
         end
 
