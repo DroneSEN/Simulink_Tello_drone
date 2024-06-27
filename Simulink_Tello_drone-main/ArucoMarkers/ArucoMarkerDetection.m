@@ -3,41 +3,49 @@ classdef ArucoMarkerDetection < matlab.System & matlab.system.mixin.Propagates
     
     properties
         % Propriétés publiques et ajustables
-        markerSizeInMM = 150; % Taille des marqueurs ArUco en millimètres
-        markerFamily = 'DICT_4X4_250'; % Famille de marqueurs ArUco
-        maxMarkers = 1; % Nombre maximum de marqueurs détectables
+        markerSizeInMM = 150;           % Taille des marqueurs ArUco en millimètres
+        markerFamily = "DICT_4X4_250";  % Famille de marqueurs ArUco
+        maxMarkers = 1;                 % Nombre maximum de marqueurs détectables
         
-        focalLength; % Longueur focale de la caméra
-        principalPoint; % Point principal de la caméra
-        imageSize; % Taille de l'image
+        focalLength;                    % Longueur focale de la caméra
+        principalPoint;                 % Point principal de la caméra
+        imageSize;                      % Taille de l'image
     end
     
     properties(Access = private)
         % Constantes pré-calculées
         intrinsics;  % Objet des paramètres intrinsèques de la caméra
+
+        % Valeur valide précédente
+        previousValidPos;
+        previousValidEulerAngles;
     end
     
     methods(Access = protected)
         function setupImpl(obj)
             % Configuration des paramètres intrinsèques de la caméra avec les propriétés fournies
-            obj.intrinsics = cameraIntrinsics(obj.focalLength, obj.principalPoint, obj.imageSize);
+            load("camera_calibration\Camera_calibration_mat\export_9BA0DC_down.mat", "cameraParams_9BA0DC");
+            fprintf("Chargement des données intrinsèques du drone 9BA0DC\n");
+            obj.intrinsics = cameraParams_9BA0DC.Intrinsics;
+
+            obj.previousValidPos = zeros(obj.maxMarkers, 3);
+            obj.previousValidEulerAngles = zeros(obj.maxMarkers, 3);    
         end
         
-        function [outputImage, cameraPositions_repere_optitrack, eulerAngles] = stepImpl(obj, I)
+        function [outputImage, camera_pos_ref_aruco, eulerAngles, detection] = stepImpl(obj, I)
             % I : image d'entrée
-            
+
+            % Correction de la rotation et mirroir
+            I = flip(permute(I, [2, 1, 3]), 2);
+
             % Correction de la distorsion de l'image
             I = undistortImage(I, obj.intrinsics);
-            
+
             % Estimation des poses des marqueurs
             [ids, locs, poses] = readArucoMarker(I, obj.markerFamily, obj.intrinsics, obj.markerSizeInMM);
-            
+
             % Initialisation des variables de sortie
-            % outputImage = I;
-            outputImage = zeros(obj.imageSize(1), obj.imageSize(2), 3); % Image annotée en sortie
-            outputImage(:,:,1) = I;
-            outputImage(:,:,2) = I;
-            outputImage(:,:,3) = I;
+            outputImage = I;
 
             cameraPositions = NaN(obj.maxMarkers, 3); % Positions de la caméra
             eulerAngles = NaN(obj.maxMarkers, 3); % Angles d'Euler
@@ -52,19 +60,22 @@ classdef ArucoMarkerDetection < matlab.System & matlab.system.mixin.Propagates
                 end
                 
                 % Calcul des coordonnées image pour les axes
-                imagePoints = worldToImage(obj.intrinsics, poses(i).Rotation, poses(i).Translation, worldPoints);
-                
+                % 1. Calcul de la matrice de transformation 3D
+                % 2. Projection des points
+                tform = rigidtform3d(poses(i).Rotation', poses(i).Translation);
+                imagePoints = worldToImage(obj.intrinsics, tform, worldPoints);
+
                 % Points pour les axes
                 axesPoints = [imagePoints(1,:) imagePoints(2,:);
                               imagePoints(1,:) imagePoints(3,:);
-                              imagePoints(1,:) imagePoints(4,:)];                
+                              imagePoints(1,:) imagePoints(4,:)];
                 
                 % Dessin des axes colorés sur l'image
                 outputImage = insertShape(outputImage, "Line", axesPoints, ...
                     'Color', ["red","green","blue"], 'LineWidth', 10);
                 
                 % Calcul de la position de la caméra par rapport au marqueur
-                cameraPositions(i, :) = -poses(i).Translation * poses(i).Rotation';
+                cameraPositions(i, :) = -poses(i).Rotation' * poses(i).Translation';
                 
                 % Calcul des angles d'Euler à partir de la matrice de rotation
                 eulerAngles(i, :) = rotm2eul(poses(i).Rotation, 'ZYX');
@@ -74,49 +85,68 @@ classdef ArucoMarkerDetection < matlab.System & matlab.system.mixin.Propagates
             cameraPositions_metre_XYZ = cameraPositions / 1000; % Conversion de mm en mètres
             
             % Conversion des positions au repère optitrack
-            cameraPositions_repere_optitrack = [cameraPositions_metre_XYZ(:,1), ...
-                                                cameraPositions_metre_XYZ(:,3), ...
-                                                -cameraPositions_metre_XYZ(:,2)];
+            camera_pos_ref_aruco = cameraPositions_metre_XYZ(1,:);
 
             % Remplir les emplacements non utilisés avec des zéros
             for i = (length(poses)+1):obj.maxMarkers
-                cameraPositions_repere_optitrack(i, :) = [0, 0, 0];
+                camera_pos_ref_aruco(i, :) = [0, 0, 0];
                 eulerAngles(i, :) = [0, 0, 0];
             end
 
             outputImage = uint8(outputImage);
+
+            % Validation des données
+            if length(poses) >= 1
+                % Si on a une position estimé, on enable le flag
+                detection = 1;
+
+                % On actualise les valeurs précédentes
+                obj.previousValidPos = camera_pos_ref_aruco;
+                obj.previousValidEulerAngles = eulerAngles;
+            else
+                % Sinon, on désactive le flag
+                detection = 0;
+
+                % On retourne les valeurs précédentes
+                camera_pos_ref_aruco = obj.previousValidPos;
+                eulerAngles = obj.previousValidEulerAngles;
+            end
         end
         
         function resetImpl(obj)
             % Initialiser / réinitialiser les propriétés discrètes
         end
         
-        function [outputImage, cameraPositions_repere_optitrack, eulerAngles] = getOutputSizeImpl(obj)
+        function [outputImage, camera_pos_ref_aruco, eulerAngles, detection] = getOutputSizeImpl(obj)
             % Retourner la taille de chaque port de sortie
-            outputImage = [obj.imageSize(1), obj.imageSize(2), 3];
-            cameraPositions_repere_optitrack = [obj.maxMarkers, 3];  % Taille fixe pour les positions
+            outputImage = [ obj.imageSize(2), obj.imageSize(1), 3];
+            camera_pos_ref_aruco = [obj.maxMarkers, 3];  % Taille fixe pour les positions
             eulerAngles = [obj.maxMarkers, 3];  % Taille fixe pour les angles d'Euler
+            detection = [1,1];
         end
         
-        function [outputImage, cameraPositions_repere_optitrack, eulerAngles] = getOutputDataTypeImpl(~)
+        function [outputImage, camera_pos_ref_aruco, eulerAngles, detection] = getOutputDataTypeImpl(~)
             % Retourner le type de données de chaque port de sortie
             outputImage = 'uint8';
-            cameraPositions_repere_optitrack = 'double';
+            camera_pos_ref_aruco = 'double';
             eulerAngles = 'double';
+            detection = 'double';
         end
         
-        function [outputImage, cameraPositions_repere_optitrack, eulerAngles] = isOutputComplexImpl(~)
+        function [outputImage, camera_pos_ref_aruco, eulerAngles, detection] = isOutputComplexImpl(~)
             % Retourner vrai pour chaque port de sortie avec des données complexes
             outputImage = false;
-            cameraPositions_repere_optitrack = false;
+            camera_pos_ref_aruco = false;
             eulerAngles = false;
+            detection = false;
         end
         
-        function [outputImage, cameraPositions_repere_optitrack, eulerAngles] = isOutputFixedSizeImpl(~)
+        function [outputImage, camera_pos_ref_aruco, eulerAngles, detection] = isOutputFixedSizeImpl(~)
             % Retourner vrai pour chaque port de sortie avec une taille fixe
             outputImage = true;
-            cameraPositions_repere_optitrack = true;  % Taille fixe pour les positions
+            camera_pos_ref_aruco = true;  % Taille fixe pour les positions
             eulerAngles = true;  % Taille fixe pour les angles d'Euler
+            detection = true;
         end
     end
 end
