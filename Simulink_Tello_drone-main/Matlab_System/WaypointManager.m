@@ -43,25 +43,30 @@ classdef WaypointManager < matlab.System
     
                 obj.Finished = 0;
                 
-                % Si la distance est acceptable ou qu'on force le prochain
-                % waypoint
-                if (errorPos <= lookaheadDistance && obj.ElapsedTimeWaypoint >= requiredTime) || (obj.PrvForceNextWaypoint ~= forceNextWaypoint && forceNextWaypoint == 1)
+                % Si la distance est acceptable on incrémente le compteur
+                if (errorPos <= lookaheadDistance)
                     
                     % On incrémente le temps passé sur le waypoint
                     obj.ElapsedTimeWaypoint = obj.ElapsedTimeWaypoint + sampleTime;
 
-                    % S'il ne s'âgit pas de la dernière position, on passe
-                    % à la suivante
+                end
+
+                % Si le temps passé sur le waypoint est supérieur au temps requis
+                % ou si on force le passage au waypoint suivant
+                if obj.ElapsedTimeWaypoint >= requiredTime || obj.PrvForceNextWaypoint ~= forceNextWaypoint
+
+                    % Si on n'est pas sur le dernier waypoint
                     if obj.CurrentWaypointIndex ~= numWaypoints
                         obj.CurrentWaypointIndex = obj.CurrentWaypointIndex + 1;
 
                         % On réinitialise le temps passé sur le waypoint
                         obj.ElapsedTimeWaypoint = 0;
                     else
+                        % Si on est sur le dernier waypoint
                         obj.Finished = 1;
                     end
-
                 end
+
             else
                 % Si le WaypointManager n'est pas activé
                 obj.Finished = 0;
