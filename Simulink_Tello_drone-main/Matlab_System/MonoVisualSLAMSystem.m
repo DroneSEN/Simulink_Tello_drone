@@ -10,23 +10,26 @@ classdef MonoVisualSLAMSystem < matlab.System
     % Public, non-tunable properties
     properties(Nontunable)
         %FocalLength Camera focal length
-        FocalLength    = [1109 1109]
+        FocalLength    = [ 865, 870];
 
         %PrincipalPoint Camera focal center
-        PrincipalPoint = [640 360]
+        PrincipalPoint = [ 487, 365];
 
         %ImageSize Image size
-        ImageSize      = [720 1280]
+        ImageSize      = [ 720, 960 ];
 
         numPoints = 1000;
         
         numSkipFrames = 20;
+
+        
     end
 
     % Pre-computed constants
     properties(Access = private)
         VslamObj
         Pose (4,4) double
+        intrinsics;
     end
 
     methods
@@ -41,20 +44,26 @@ classdef MonoVisualSLAMSystem < matlab.System
         %% Common functions
         function setupImpl(obj)
             % Perform one-time calculations, such as computing constants
-            intrinsics = cameraIntrinsics(obj.FocalLength, obj.PrincipalPoint, obj.ImageSize);
+            intrinsicssimple = cameraIntrinsics(obj.FocalLength, obj.PrincipalPoint, obj.ImageSize);
             obj.numPoints = 1000;
             obj.numSkipFrames = 20;
-            obj.VslamObj = monovslam(intrinsics,MaxNumPoints=obj.numPoints,SkipMaxFrames=obj.numSkipFrames);
+            obj.VslamObj = monovslam(intrinsicssimple,MaxNumPoints=obj.numPoints,SkipMaxFrames=obj.numSkipFrames);
             obj.Pose = eye(4);
+            % Configuration des paramètres intrinsèques de la caméra avec les propriétés fournies
+            %load("camera_calibration/Camera_calibration_mat/export_9BA13B_front.mat");
+            %obj.intrinsics = export_cameraParams_9BA13B.Intrinsics;
         end
 
         function [pose, isTrackingLost] = stepImpl(obj, I)
-            % Implement algorithm. Calculate y as a function of input u and
-            % discrete states.
+
+            % Correction de la distorsion de l'image
+            %I = undistortImage(I, obj.intrinsics);
+
+            %ajout frame
             addFrame(obj.VslamObj,I);
 
             if hasNewKeyFrame(obj.VslamObj)
-                plot(obj.VslamObj);
+                %plot(obj.VslamObj);
                 [camPoses,~] = poses(obj.VslamObj);
                 p = camPoses(end);
                 obj.Pose = p.A;

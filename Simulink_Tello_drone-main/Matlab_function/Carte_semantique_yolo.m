@@ -3,6 +3,7 @@
 groundtruthopti = [];
 objectPositions = [];
 droneSlamPositions = [];
+xyzPoints = [];
 
 % Chargement des données, si disponibles
 if exist('out', 'var')
@@ -76,15 +77,15 @@ end
 %plot3(droneGyroposition(:, 1), droneGyroposition(:, 2), droneGyroposition(:, 3), 'o-', 'LineWidth', 2, 'DisplayName', 'Gyro Position');
 
 %% Tracement fictif test
-% Tracement de la position groundtruthopti, si disponible
-if exist('displacement', 'var')
-    plot3(displacement(:, 1), displacement(:, 2), displacement(:, 3), 'r-', 'LineWidth', 2, 'DisplayName', 'SLAM Position');
-end
-
-if exist('allObjectPositions', 'var')
-%Test tracer des valeurs aléaotire 
-scatter3(allObjectPositions(:, 1), allObjectPositions(:, 2), allObjectPositions(:, 3), 'r.', 'DisplayName', 'objectPositions');
-end
+% % Tracement de la position groundtruthopti, si disponible
+% if exist('displacement', 'var')
+%     plot3(displacement(:, 1), displacement(:, 2), displacement(:, 3), 'r-', 'LineWidth', 2, 'DisplayName', 'SLAM Position');
+% end
+% 
+% if exist('allObjectPositions', 'var')
+% %Test tracer des valeurs aléaotire 
+% scatter3(allObjectPositions(:, 1), allObjectPositions(:, 2), allObjectPositions(:, 3), 'r.', 'DisplayName', 'objectPositions');
+% end
 
 
 %% Paramètre du graphique
