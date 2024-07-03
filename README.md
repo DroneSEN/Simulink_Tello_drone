@@ -69,7 +69,7 @@ YOLO is used for object detection ([Matlab YOLOv4](https://fr.mathworks.com/help
 
 Accurate ([camera calibration](https://fr.mathworks.com/help/vision/camera-calibration.html)) is essential to have the intrinsincs matriw of each drones.
 
-The intrinsic matrix \( K \) of the camera is given by:
+The intrinsic matrix K of the camera is given by:
 
 \[ K = \begin{pmatrix}
 f_x & 0 & c_x \\
@@ -81,9 +81,6 @@ Where:
 - \( f_x \) and \( f_y \) are the focal lengths in the x and y directions, respectively.
 - \( c_x \) and \( c_y \) are the coordinates of the principal point (usually at the center of the image).
 
-### Process 
-
-## Camera Calibration on Matlab
 
 ### Step-by-Step Process
 
@@ -93,7 +90,7 @@ Where:
 
    ```matlab
    % Run the script to capture images
-   run('/Users/quentinlandon/Library/CloudStorage/OneDrive-ESTACA/DRONE_edutello/Simulink_Tello_drone-main/camera_calibration/camera_calibration_photo_extract.m')
+   run('/DRONE_edutello/Simulink_Tello_drone-main/camera_calibration/camera_calibration_photo_extract.m')
 
 
 2. **Open the Camera Calibrator App:**
