@@ -146,5 +146,6 @@ Peter Corke, *Robotics, Vision and Control (Third Edition), Fundamental Algorith
 
 Peter Corke, *Robotics, Vision and Control (Second Edition), Fundamental Algorithms in Matlab* [Link](https://link.springer.com/book/10.1007/978-3-319-54413-7)
 
+S. Garrido-Jurado et Al, *Automatic generation and detection of highly reliable fiducial markers under occlusion*, Jan. 2014 [Link to ResearchGate](https://www.researchgate.net/publication/260251570_Automatic_generation_and_detection_of_highly_reliable_fiducial_markers_under_occlusion)
 
 Steven M. LaValle, *Planning Algorithms* [Link](https://lavalle.pl/planning/)
