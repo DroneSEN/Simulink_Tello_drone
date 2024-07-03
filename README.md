@@ -4,8 +4,8 @@
 
 1. [Setup the Project](#setup-the-project)
 2. [Materials Used](#materials-used)
-3. [Tello Drone Control on Simulink](#tello-drone-control-on-simulink)
-4. [Modified Tello Matlab Library](#modified-tello-matlab-library)
+3. [Modified Tello Matlab Library](#modified-tello-matlab-library)
+4. [Tello Drone Control on Simulink](#tello-drone-control-on-simulink)
 5. [SLAM (Simultaneous Localization and Mapping) on Simulink with Tello](#slam-on-simulink-with-tello)
 6. [Optitrack Setup](#optitrack-setup)
 7. [Drone Positioning with YOLO](#drone-positioning-with-yolo)
@@ -32,15 +32,35 @@
 - Matlab: For camera calibration, SLAM, and various computational tasks.
 - Aruco Markers: Used for positioning with the Tello's down-facing camera.
 
+## Modified Tello Matlab Library
+
+The Ryze Tello [Matlab library](https://fr.mathworks.com/help/matlab/ryzeio.html) has been modified to enhance its functionality for this project. These modifications include:
+
+1. Improved navigation commands with RC commands.
+2. Added the ability to switch to and access the down-facing camera stream.
+3. Enhanced real-time streaming, ensuring the stream does not freeze during yaw, takeoff, or land commands.
+
 ## Tello Drone Control on Simulink
 
-## Modified Tello Matlab Library
+The project involves controlling the Tello EDU drones using Simulink. This section details the integration of Tello drone control within Simulink, including setting up communication between the drone and Simulink, and implementing flight control algorithms with the used of the matlab library of Ryze Tello.
 
 ## SLAM (Simultaneous Localization and Mapping) on Simulink with Tello
 
+SLAM is a critical component of autonomous navigation. This section covers the implementation of SLAM using Simulink and Tello drones. The process involves:
+
+1. Real-time mapping of the environment.
+2. Localization of the drone to get the pose (tform) of the drone in Slam referential.
+
 ## Optitrack setup
 
+Optitrack is used for tracking the precise position of the drone. 
+
 ## Drone Positioning with YOLO
+
+YOLO is used for object detection ([Matlab YOLOv4](https://fr.mathworks.com/help/vision/ug/object-detection-using-yolov4-deep-learning.html)) to position the drone and perform semantic mapping. This section includes:
+
+1. Setting up YOLO for real-time detection.
+2. Calculating the pose of the drone or objects within a partially known environment.
 
 ## Semantic Mapping with YOLO
 
