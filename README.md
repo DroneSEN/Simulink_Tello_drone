@@ -25,6 +25,9 @@
 ## Materials Used
 
 - Tello EDU Drones: Used for implementing control algorithms and SLAM.
+
+![Tello Edu Drone](imagesreadme/05-en-m.png)
+
 - Simulink: A simulation and model-based design environment for dynamic and embedded systems.
 - Optitrack System: Used for precise tracking of the drone.
 - YOLO (You Only Look Once): A real-time object detection system.
