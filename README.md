@@ -8,12 +8,11 @@
 4. [Tello Drone Control on Simulink](#tello-drone-control-on-simulink)
 5. [SLAM (Simultaneous Localization and Mapping) on Simulink with Tello](#slam-on-simulink-with-tello)
 6. [Optitrack Setup](#optitrack-setup)
-7. [Drone Positioning with YOLO](#drone-positioning-with-yolo)
-8. [Semantic Mapping with YOLO](#semantic-mapping-with-yolo)
-9. [Camera Calibration with Matlab](#camera-calibration-with-matlab)
-10. [Aruco Positioning with Tello's Down Camera](#aruco-positioning-with-tellos-down-camera)
-11. [Waypoint Manager and Control of Tello](#waypoint-manager-and-control-of-tello)
-12. [Bibliography](#bibliography)
+7. [Drone Positioning with YOLO and Semantic Mapping with YOLO](#drone-positioning-with-yolo-and-Semantic-Mapping-with-YOLO)
+8. [Camera Calibration with Matlab](#camera-calibration-with-matlab)
+9. [Aruco Positioning with Tello's Down Camera](#aruco-positioning-with-tellos-down-camera)
+10. [Waypoint Manager and Control of Tello](#waypoint-manager-and-control-of-tello)
+11. [Bibliography](#bibliography)
 
 ## Setup the Project
 
@@ -55,14 +54,13 @@ SLAM is a critical component of autonomous navigation. This section covers the i
 
 Optitrack is used for tracking the precise position of the drone. 
 
-## Drone Positioning with YOLO
+## Drone Positioning with YOLO and Semantic Mapping with YOLO
 
 YOLO is used for object detection ([Matlab YOLOv4](https://fr.mathworks.com/help/vision/ug/object-detection-using-yolov4-deep-learning.html)) to position the drone and perform semantic mapping. This section includes:
 
 1. Setting up YOLO for real-time detection.
 2. Calculating the pose of the drone or objects within a partially known environment.
-
-## Semantic Mapping with YOLO
+3. Semantic mapping 
 
 ## Camera Calibration with Matlab
 
