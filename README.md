@@ -69,14 +69,17 @@ YOLO is used for object detection ([Matlab YOLOv4](https://fr.mathworks.com/help
 
 Accurate ([camera calibration](https://fr.mathworks.com/help/vision/camera-calibration.html)) is essential to have the intrinsincs matriw of each drones.
 
-The intrinsic matrix K of the camera is given by:
+The intrinsic matrix `K` of the camera is given by:
 
-\vec{v} = \begin{bmatrix} X \\\ Y \end{bmatrix}
+```plaintext
+K = [ f_x  0   c_x ]
+    [  0  f_y  c_y ]
+    [  0   0    1  ]
 
 
 Where:
-- \( f_x \) and \( f_y \) are the focal lengths in the x and y directions, respectively.
-- \( c_x \) and \( c_y \) are the coordinates of the principal point (usually at the center of the image).
+- `f_x` and `f_y` are the focal lengths in the x and y directions, respectively.
+- `c_x` and `c_y` are the coordinates of the principal point (usually at the center of the image).
 
 
 ### Step-by-Step Process
