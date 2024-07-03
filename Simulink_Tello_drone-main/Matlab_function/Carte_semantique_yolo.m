@@ -44,9 +44,9 @@ hold on;
 %Dimension de l'objet connu
 objdimension = [0.47 0.33 0.22]; %ordinateur portable
 
-posobj1 = [0.8 1 2]; % repère opti X,Y,Z 
+posobj1 = [1.10 0.825 2.177]; % repère opti X,Y,Z 
 origin1 = posobj1 - objdimension / 2;
-posobj2 = [-0.8 1 2]; % repère opti 
+posobj2 = [-0.34 0.84 2.196]; % repère opti 
 origin2 = posobj2 - objdimension / 2;
 
 % Tracement des cubes pour les positions des objets
@@ -64,9 +64,12 @@ if ~isempty(groundtruthopti)
     plot3(groundtruthopti(:, 1), groundtruthopti(:, 2), groundtruthopti(:, 3), 'g-', 'LineWidth', 1, 'DisplayName', 'True Position');
 end
 
-% Tracement de la position droneSlamPositions, si disponible
+% offset
+Aruko_Offset = [0; 0.8; 0];
+
+% % Tracement de la position droneSlamPositions, si disponible
 if ~isempty(droneSlamPositions)
-    plot3(droneSlamPositions(:, 1), droneSlamPositions(:, 2), droneSlamPositions(:, 3), 'b-', 'LineWidth', 2, 'DisplayName', 'SLAM Position');
+    plot3(droneSlamPositions(:, 1)+Aruko_Offset(1), droneSlamPositions(:, 2)+Aruko_Offset(2), droneSlamPositions(:, 3)+Aruko_Offset(3), 'b-', 'LineWidth', 2, 'DisplayName', 'SLAM Position');
 end
 
 % Tracement des points slams, si disponible

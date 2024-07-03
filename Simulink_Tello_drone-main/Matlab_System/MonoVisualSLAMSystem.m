@@ -45,19 +45,18 @@ classdef MonoVisualSLAMSystem < matlab.System
         function setupImpl(obj)
             % Perform one-time calculations, such as computing constants
             intrinsicssimple = cameraIntrinsics(obj.FocalLength, obj.PrincipalPoint, obj.ImageSize);
-            obj.numPoints = 1000;
-            obj.numSkipFrames = 20;
             obj.VslamObj = monovslam(intrinsicssimple,MaxNumPoints=obj.numPoints,SkipMaxFrames=obj.numSkipFrames);
             obj.Pose = eye(4);
-            % Configuration des paramètres intrinsèques de la caméra avec les propriétés fournies
-            %load("camera_calibration/Camera_calibration_mat/export_9BA13B_front.mat");
-            %obj.intrinsics = export_cameraParams_9BA13B.Intrinsics;
+
+            % % Configuration des paramètres intrinsèques de la caméra avec les propriétés fournies
+            % load("camera_calibration/Camera_calibration_mat/export_9BA13B_front.mat");
+            % obj.intrinsics = export_cameraParams_9BA13B.Intrinsics;
         end
 
         function [pose, isTrackingLost] = stepImpl(obj, I)
 
             % Correction de la distorsion de l'image
-            %I = undistortImage(I, obj.intrinsics);
+            % I = undistortImage(I, obj.intrinsics);
 
             %ajout frame
             addFrame(obj.VslamObj,I);
