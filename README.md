@@ -75,6 +75,7 @@ The intrinsic matrix `K` of the camera is given by:
 K = [ f_x  0   c_x ]
     [  0  f_y  c_y ]
     [  0   0    1  ]
+```
 
 
 Where:
