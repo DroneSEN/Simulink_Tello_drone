@@ -26,7 +26,7 @@
 
 - Tello EDU Drones: Used for implementing control algorithms and SLAM.
 
-![Tello Edu Drone](imagesreadme/05-en-m.png)
+![Tello Edu Drone](imagesreadme/Tellodrone.png)
 
 - Simulink: A simulation and model-based design environment for dynamic and embedded systems.
 - Optitrack System: Used for precise tracking of the drone.
@@ -67,9 +67,73 @@ YOLO is used for object detection ([Matlab YOLOv4](https://fr.mathworks.com/help
 
 ## Camera Calibration with Matlab
 
+Accurate ([camera calibration](https://fr.mathworks.com/help/vision/camera-calibration.html)) is essential to have the intrinsincs matriw of each drones.
+
+The intrinsic matrix \( K \) of the camera is given by:
+
+\[ K = \begin{pmatrix}
+f_x & 0 & c_x \\
+0 & f_y & c_y \\
+0 & 0 & 1
+\end{pmatrix} \]
+
+Where:
+- \( f_x \) and \( f_y \) are the focal lengths in the x and y directions, respectively.
+- \( c_x \) and \( c_y \) are the coordinates of the principal point (usually at the center of the image).
+
+### Process 
+
+## Camera Calibration on Matlab
+
+### Step-by-Step Process
+
+1. **Capture Calibration Images:**
+
+   Use the provided Matlab script to capture images of a checkerboard pattern. Ensure that the checkerboard is visible in different positions and angles to cover the entire field of view of the camera.
+
+   ```matlab
+   % Run the script to capture images
+   run('/Users/quentinlandon/Library/CloudStorage/OneDrive-ESTACA/DRONE_edutello/Simulink_Tello_drone-main/camera_calibration/camera_calibration_photo_extract.m')
+
+
+2. **Open the Camera Calibrator App:**
+
+   In Matlab, open the Camera Calibrator app using the following command:
+
+   run cameraCalibrator
+
+   ![Camera calibration](imagesreadme/Cameracalibration.jpg)
+
+3. **Import Calibration Images:**
+
+   Click on Add Images and select the images captured in step 1.
+   Ensure that the images contain a clear view of the checkerboard pattern.
+
+4. **Set Checkerboard Parameters:**
+
+   Enter the square size and the number of squares in the checkerboard.
+   For this example, use the following settings:
+
+   - Square Size: 34 (in millimeters)
+   - Number of Squares: 6 rows by 8 columns
+
+5. **Perform Calibration:**
+
+   Click on Calibrate to start the calibration process.
+   Matlab will process the images and compute the camera parameters.
+
+6. **Review Calibration Results:**
+
+   After the calibration is complete, review the reprojection errors and ensure they are within an acceptable range.
+   Save the calibration session and export the camera parameters for future use.
+
 ## Aruco Positioning with Tello's Down Camera
 
+Aruco markers are used for precise positioning during takeoff. 
+
 ## Waypoint Manager and Control of Tello
+
+The waypoint manager is responsible for planning and executing flight paths. 
 
 ## Bibliography
 
