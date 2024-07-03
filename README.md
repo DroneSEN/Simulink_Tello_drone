@@ -63,7 +63,9 @@ YOLO is used for object detection ([Matlab YOLOv4](https://fr.mathworks.com/help
 
 1. Setting up YOLO for real-time detection.
 2. Calculating the pose of the drone or objects within a partially known environment.
-3. Semantic mapping 
+3. Semantic mapping
+
+More information available on this system in the [this document](docs/ObjectDetection.md).
 
 ## Camera Calibration with Matlab
 
