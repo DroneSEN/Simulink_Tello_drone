@@ -98,7 +98,7 @@ Where:
 
    In Matlab, open the Camera Calibrator app using the following command:
 
-   run cameraCalibrator
+   `run cameraCalibrator`
 
    ![Camera calibration](imagesreadme/Cameracalibration.jpg)
 
