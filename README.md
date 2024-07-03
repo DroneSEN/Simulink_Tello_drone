@@ -46,6 +46,14 @@ The Ryze Tello [Matlab library](https://fr.mathworks.com/help/matlab/ryzeio.html
 
 The project involves controlling the Tello EDU drones using Simulink. This section details the integration of Tello drone control within Simulink, including setting up communication between the drone and Simulink, and implementing flight control algorithms with the used of the matlab library of Ryze Tello.
 
+```mermaid
+flowchart LR
+    A[Position estimation] -->|SLAM, IMU| C{Global map}
+    B[Object detection]    -->|Object pos and sizes| C{Global map}
+    C{Global map} --> D[Path Planning]
+    D[Path Planning] --> E[Control]
+```
+
 ## SLAM (Simultaneous Localization and Mapping) on Simulink with Tello
 
 SLAM is a critical component of autonomous navigation. This section covers the implementation of SLAM using Simulink and Tello drones. The process involves:
