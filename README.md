@@ -25,9 +25,6 @@
 ## Materials Used
 
 - Tello EDU Drones: Used for implementing control algorithms and SLAM.
-
-![Tello Edu Drone](docs/imagesreadme/Tellodrone.png)
-
 - Simulink: A simulation and model-based design environment for dynamic and embedded systems.
 - Optitrack System: Used for precise tracking of the drone.
 - YOLO (You Only Look Once): A real-time object detection system.
@@ -43,9 +40,14 @@ The Ryze Tello [Matlab library](https://fr.mathworks.com/help/matlab/ryzeio.html
 3. Enhanced real-time streaming, ensuring the stream does not freeze during yaw, takeoff, or land commands.
 
 To update your version of the library execute : 
+
+1. In the terminal past this commande to open the library program 
 ```matlab
-1. In the terminal past this commande to open the library program Open ryze.m
-2. Copy and past our code into it by open this program run('Simulink_Tello_drone-main/ryze.m').
+Open ryze.m
+```
+2. Copy and past our code into it by open this program 
+```matlab
+run('Simulink_Tello_drone-main/ryze.m').
 ```
 
 ## Tello Drone Control on Simulink
