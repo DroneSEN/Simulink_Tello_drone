@@ -15,8 +15,6 @@
 
    `run cameraCalibrator`
 
-   ![Camera calibration](docs/imagesreadme/Cameracalibration.jpg)
-
 3. **Import Calibration Images:**
 
    Click on Add Images and select the images captured in step 1.
