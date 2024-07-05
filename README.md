@@ -77,6 +77,24 @@ More information available on this system in [this document](docs/ObjectDetectio
 
 Optitrack is used for tracking the precise position of the drone. 
 
+\documentclass{standalone}
+\usepackage{tikz}
+\begin{document}
+\begin{tikzpicture}
+  \draw[thick,->] (0,0,0) -- (3,0,0) node[anchor=north east]{$X$};
+  \draw[thick,->] (0,0,0) -- (0,3,0) node[anchor=north west]{$Y$};
+  \draw[thick,->] (0,0,0) -- (0,0,3) node[anchor=south]{$Z$};
+
+  % Adding labels for clarity
+  \node at (3.2, 0, 0) {Vers la droite};
+  \node at (0, 3.2, 0) {Vers le haut};
+  \node at (0, 0, 3.2) {Vers l'avant};
+
+  % Origin
+  \node at (0, 0, 0) [anchor=north east] {O};
+\end{tikzpicture}
+\end{document}
+
 ![Optitrack](docs/imagesreadme/optitrack.png)
 
 More information available on this system in this [repository](https://github.com/DroneSEN/Optilink).
