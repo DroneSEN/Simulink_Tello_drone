@@ -26,7 +26,7 @@
 
 - Tello EDU Drones: Used for implementing control algorithms and SLAM.
 
-![Tello Edu Drone](imagesreadme/Tellodrone.png)
+![Tello Edu Drone](docs/imagesreadme/Tellodrone.png)
 
 - Simulink: A simulation and model-based design environment for dynamic and embedded systems.
 - Optitrack System: Used for precise tracking of the drone.

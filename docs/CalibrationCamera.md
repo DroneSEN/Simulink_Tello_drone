@@ -15,7 +15,7 @@
 
    `run cameraCalibrator`
 
-   ![Camera calibration](imagesreadme/Cameracalibration.jpg)
+   ![Camera calibration](docs/imagesreadme/Cameracalibration.jpg)
 
 3. **Import Calibration Images:**
 
