@@ -69,6 +69,10 @@ More information available on this system in [this document](docs/ObjectDetectio
 
 Optitrack is used for tracking the precise position of the drone. 
 
+![Optitrack](docs/imagesreadme/optitrack.png)
+
+More information available on this system in this [Github](https://github.com/DroneSEN/Optilink).
+
 ## Drone Positioning with YOLO and Semantic Mapping with YOLO
 
 YOLO is used for object detection ([Matlab YOLOv4](https://fr.mathworks.com/help/vision/ug/object-detection-using-yolov4-deep-learning.html)) to position the drone and perform semantic mapping. This section includes:
