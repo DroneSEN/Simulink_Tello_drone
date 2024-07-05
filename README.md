@@ -42,6 +42,11 @@ The Ryze Tello [Matlab library](https://fr.mathworks.com/help/matlab/ryzeio.html
 2. Added the ability to switch to and access the down-facing camera stream.
 3. Enhanced real-time streaming, ensuring the stream does not freeze during yaw, takeoff, or land commands.
 
+To update your version of the library execute : 
+```matlab
+1. In the terminal past this commande to open the library program Open ryze.m
+2. Copy and past our code into it by open this program run('Simulink_Tello_drone-main/ryze.m').
+
 ## Tello Drone Control on Simulink
 
 The project involves controlling the Tello EDU drones using Simulink. This section details the integration of Tello drone control within Simulink, including setting up communication between the drone and Simulink, and implementing flight control algorithms with the used of the matlab library of Ryze Tello.
@@ -71,7 +76,7 @@ Optitrack is used for tracking the precise position of the drone.
 
 ![Optitrack](docs/imagesreadme/optitrack.png)
 
-More information available on this system in this [Github](https://github.com/DroneSEN/Optilink).
+More information available on this system in this [repository](https://github.com/DroneSEN/Optilink).
 
 ## Drone Positioning with YOLO and Semantic Mapping with YOLO
 
