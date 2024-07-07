@@ -77,7 +77,7 @@ More information available on this system in [this document](docs/SLAM.md).
 
 Optitrack is used for tracking the precise position of the drone. 
 
-![Optitrack](docs/imagesreadme/optitrack.png)
+![Optitrack](docs/optitrack.png)
 
 More information available on this system in this [repository](https://github.com/DroneSEN/Optilink).
 
