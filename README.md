@@ -69,9 +69,9 @@ SLAM is a critical component of autonomous navigation. This section covers the i
 1. Real-time mapping of the environment.
 2. Localization of the drone to get the pose (tform) of the drone in Slam referential.
 
-Matlab library [there.](https://fr.mathworks.com/help/vision/ref/monovslam.html).
+Matlab library [there.](https://fr.mathworks.com/help/vision/ref/monovslam.html)
 
-More information available on this system in [this document](docs/ObjectDetection.md).
+More information available on this system in [this document](docs/SLAM.md).
 
 ## Optitrack setup
 
