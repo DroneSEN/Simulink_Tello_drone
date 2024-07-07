@@ -8,20 +8,20 @@ MonoVSLAM in MATLAB is a powerful tool for creating 3D maps and tracking camera 
     To develop it in real-time in Simulink, we are using a MATLAB system. You can find it at this path:
 
     ```matlab
-    /Users/quentinlandon/Library/CloudStorage/OneDrive-ESTACA/DRONE_edutello/Simulink_Tello_drone-main/Matlab_System/MonoVisualSLAMSystem.m
+    Simulink_Tello_drone-main/Matlab_System/MonoVisualSLAMSystem.m
     ```
 
     ```mermaid
     flowchart LR
-        A[Sensors] --> B{ORB Based Keypoint Detection and Matching}
+        A[Sensors] --> B[ORB Based Keypoint Detection and Matching]
         B --> C[Pose Estimation: Fundamental Matrix Triangulation Bundle Adjustment]
         C --> D[Path Estimation]
-        D --> E{Loop Closure + Visual Odometry}
+        D --> E[Loop Closure + Visual Odometry]
         C --> F[Camera Position + Local Map]
 
 2. **Input:**
 
-    ![SLAM input](docs/imagesreadme/SLAM1.png)
+    ![SLAM1](docs/imagesreadme/SLAM1.png)
 
     There you have to enter the intrinsic parameters of the camera and the size of the image:
 
@@ -38,18 +38,20 @@ MonoVSLAM in MATLAB is a powerful tool for creating 3D maps and tracking camera 
 
     `numPoints`: Specifies the number of feature points used for tracking and mapping in the SLAM algorithm.
 
-    Impact of Adjustment:
+    **Impact of Adjustment:**
 
-    Increase: Improves map and localization accuracy; more points allow better recognition of distinct features in the environment. However, it increases computational demands, which can slow down processing, and requires more memory to store the additional points.
-    Decrease: Reduces computational load and memory requirements. Speeds up processing, which can be beneficial for real-time systems with limited resources. However, it may reduce localization accuracy and map quality. Fewer points can make the system less robust to environmental variations.
+    **Increase:** Improves map and localization accuracy; more points allow better recognition of distinct features in the environment. However, it increases computational demands, which can slow down processing, and requires more memory to store the additional points.
+
+    **Decrease:** Reduces computational load and memory requirements. Speeds up processing, which can be beneficial for real-time systems with limited resources. However, it may reduce localization accuracy and map quality. Fewer points can make the system less robust to environmental variations.
 
     `numSkipFrames`: Determines the number of frames to skip between consecutive processing steps in the SLAM algorithm.
 
-    Impact of Adjustment:
+    **Impact of Adjustment:**
 
-    Increase: Reduces processing frequency, which can lighten the computational load. Useful for scenarios with slow movements or limited resources. However, it may decrease localization and mapping accuracy, especially in dynamic environments. There is a risk of losing information between skipped frames, which can degrade overall performance.
-    Decrease: Improves localization accuracy and map quality by processing more data. Useful for environments with fast movements or frequent changes. However, it increases computational load and can slow down the system. It may require more processing power and memory.
+    **Increase:** Reduces processing frequency, which can lighten the computational load. Useful for scenarios with slow movements or limited resources. However, it may decrease localization and mapping accuracy, especially in dynamic environments. There is a risk of losing information between skipped frames, which can degrade overall performance.
+
+    **Decrease:** Improves localization accuracy and map quality by processing more data. Useful for environments with fast movements or frequent changes. However, it increases computational load and can slow down the system. It may require more processing power and memory.
 
 3. **Output:**
 
-    ![SLAM output](docs/imagesreadme/SLAM2.png)
+    ![SLAM2](docs/imagesreadme/SLAM2.png)
