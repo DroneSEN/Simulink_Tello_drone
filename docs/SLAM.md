@@ -21,7 +21,7 @@ MonoVSLAM in MATLAB is a powerful tool for creating 3D maps and tracking camera 
 
 2. **Input:**
 
-    ![SLAM1](docs/imagesreadme/SLAM1.png)
+    ![SLAM1](docs/SLAM1.png)
 
     There you have to enter the intrinsic parameters of the camera and the size of the image:
 
@@ -54,4 +54,4 @@ MonoVSLAM in MATLAB is a powerful tool for creating 3D maps and tracking camera 
 
 3. **Output:**
 
-    ![SLAM2](docs/imagesreadme/SLAM2.png)
+    ![SLAM2](docs/SLAM2.png)
