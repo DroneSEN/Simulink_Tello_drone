@@ -2,6 +2,10 @@
 
 This document is dedicated to the Yolo Object Detection system.
 
+**The block Yolo :**
+
+![YOLO_Simulinkpart](YOLO_Simulinkpart.png)
+
 1. **There you have an overview of the process and the goal of our applicaiton with Yolo :** 
 
     ![processshemayolo](processshemayolo.png)
