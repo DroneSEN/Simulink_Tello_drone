@@ -49,7 +49,7 @@ This document is dedicated to the Yolo Object Detection system.
     $$
 
     - posecamtodrone: This output gives the pose of the object in the UAV referential, wich is a matrix 4X1.
-    
+
     $$
     posecamtodrone = 
     \begin{pmatrix}
