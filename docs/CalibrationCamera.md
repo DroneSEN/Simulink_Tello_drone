@@ -15,6 +15,8 @@ This document is dedicated to the Camera Calibration with Matlab.
 
 2. **Open the Camera Calibrator App:**
 
+   ![Cameracalibration](Cameracalibration.jpg)
+
    In Matlab, open the Camera Calibrator app using the following command:
 
    `run cameraCalibrator`

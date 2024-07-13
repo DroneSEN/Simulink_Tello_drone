@@ -4,7 +4,7 @@ This document is dedicated to the Yolo Object Detection system.
 
 1. **There you have an overview of the process and the goal of our applicaiton with Yolo :** 
 
-    ![Schema yolo](schemayolo.png)
+    ![processshemayolo](processshemayolo.png)
 
     Actually our system is made to calculate the position object in the Optitrack referential and map it into a semantic map with the matlab code below and toworkspace block in output : 
 
@@ -64,3 +64,18 @@ This document is dedicated to the Yolo Object Detection system.
     ![output_yolo_tformtoopti](output_yolo_tformtoopti.png)
 
     What we are doing there is that we multiply our position of the detected object in the UAV referential (4X1) with the TFORM UAV to optitrack.
+
+4. **Semantic map** 
+
+    Our code "semantic_map" retrieves various variables from Simulink using different "to workspace" blocks:
+
+    - Camera movement (Optitrack) : green line
+    - Camera movement (SLAM) : blue line
+    - XYZ points (SLAM) : blue point
+    - Object position estimation with the camera : red point
+    
+    Finally, the true position of two objects in space, which we configure directly in the code.
+
+    To do this, we use plot3 and scatter. 
+
+    ![semanticmap](semanticmap.jpg)
