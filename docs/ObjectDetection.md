@@ -80,4 +80,4 @@ This document is dedicated to the Yolo Object Detection system.
 
     To do this, we use plot3 and scatter. 
 
-    ![semanticmap](semantic.jpg)
+    ![semanticmap](semantic.png)
