@@ -2,41 +2,64 @@
 
 This document is dedicated to the Yolo Object Detection system.
 
-\documentclass{standalone}
-\usepackage{tikz}
-\usetikzlibrary{shapes.geometric, arrows, positioning, calc}
+1. **There you have an overview of the process and the goal of our applicaiton with Yolo :** 
 
-\tikzstyle{block} = [rectangle, draw, fill=blue!20, 
-    text width=12em, text centered, rounded corners, minimum height=4em]
-\tikzstyle{line} = [draw, -latex']
-\tikzstyle{database} = [cylinder, shape border rotate=90, draw, minimum height=4em, minimum width=2em, text width=10em, text centered, fill=blue!20]
+    ![Schema yolo](schemayolo.png)
 
-\begin{document}
+    Actually our system is made to calculate the position object in the Optitrack referential and map it into a semantic map with the matlab code below and toworkspace block in output : 
 
-\begin{tikzpicture}[node distance = 2cm, auto]
-    % Nodes
-    \node [database] (known) {Base de données d'objets connus \\ (x, y, z, h, w, p)};
-    \node [database, below of=known] (estimated) {Base de données d'objets de grande taille estimée \\ (h, w, p)};
-    \node [block, right of=known, node distance=5cm] (algo) {Algorithme};
-    \node [block, right of=algo, node distance=5cm] (drone) {Repositionnement du drone};
-    \node [block, below of=drone] (map) {Carte sémantique};
-    \node [block, below of=estimated, node distance=5cm] (yolo) {YOLO (You Only Look Once) reconnaissance d'objets \\ (x, y, h, w)};
-    \node [block, below of=algo, node distance=5cm] (camera) {Paramètre intrinsèque Caméra};
-    \node [below of=camera, node distance=2cm] (matrix) {
-        $K = \begin{bmatrix}
-        f_x & 0 & c_x \\
-        0 & f_y & c_y \\
-        0 & 0 & 1
-        \end{bmatrix}$
-    };
+    ```matlab
+        Simulink_Tello_drone-main/Matlab_function/Carte_semantique.m
+    ```
 
-    % Lines
-    \path [line] (known) -- (algo);
-    \path [line] (estimated) -- (algo);
-    \path [line] (yolo) -- (algo);
-    \path [line] (algo) -- (drone);
-    \path [line] (algo) -- (map);
-    \path [line] (camera) -- (algo);
-\end{tikzpicture}
+2. **Focus on our block matlab system for yolo :**
 
-\end{document}
+    ![Yolo_block](Yolo_block.png)
+
+    **Inputs**
+
+    - Image: The input image on which object detection and further processing will be performed. You have to defined the resolution of the camera into the matlab system code there : 
+
+    ```matlab
+    Simulink_Tello_drone-main/Matlab_System/Yolo_Object_Detector.m
+    ```
+    - degreecam: The angle of the camera in degrees, which is used for calculating the camera pose and transformation matrices, in fact the camera of the drone as a small orientation around 10 degree to the ground.
+
+    **Outputs**
+
+    - Tform_camtodrone: This output provides the transformation matrix that converts coordinates from the Front camera frame to the drone frame.There you can have in grey the camera referential in red the UAV referential and the transformation into optitrack referential wich is done after the yolo Block. 
+
+    ![Refdrone](Refdrone.png)
+
+    - AnnotatedImage: This output is the input image with bounding boxes and annotations drawn on detected objects. Like this one : 
+
+    ![Yolodetection](Yolodetection.png)
+
+    - BBoxDimensions: This output provides the dimensions of the bounding boxes around detected objects.
+    - CamCoordinates: This output provides the coordinates of detected objects in the camera frame.
+    - posecam: This output gives the pose of the object in the camera referential, wich is a matrix 4X1.
+
+    $$
+    posecam = 
+    \begin{pmatrix}
+    X\\
+    Y\\
+    Z
+    \end{pmatrix}
+    $$
+
+    - posecamtodrone: This output gives the pose of the object in the UAV referential, wich is a matrix 4X1.
+
+    posecamtodrone = 
+    \begin{pmatrix}
+    X\\
+    Y\\
+    Z
+    \end{pmatrix}
+    $$
+
+3. **Transformation to optitrack referential :**
+
+    ![output_yolo_tformtoopti](output_yolo_tformtoopti.png)
+
+    What we are doing there is that we multiply our position of the detected object in the UAV referential (4X1) with the TFORM UAV to optitrack.

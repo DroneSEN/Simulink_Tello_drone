@@ -54,4 +54,4 @@ MonoVSLAM in MATLAB is a powerful tool for creating 3D maps and tracking camera 
 
 3. **Output:**
 
-    ![SLAM2](docs/SLAM2.png)
+    ![SLAM2](SLAM2.png)
