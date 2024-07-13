@@ -2,6 +2,10 @@
 
 MonoVSLAM in MATLAB is a powerful tool for creating 3D maps and tracking camera position using video or image streams. Ideal for real-time applications like autonomous navigation and augmented reality, it leverages advanced computer vision algorithms and integrates seamlessly with MATLAB for efficient analysis and prototyping.
 
+**The block simulink :**
+
+![SLAM_simulinkpart](SLAM_simulinkpart.png)
+
 ### How managed monovslam ? 
 
 1. **Process:**
