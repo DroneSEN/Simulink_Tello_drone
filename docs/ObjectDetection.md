@@ -41,7 +41,7 @@ This project utilizes the YOLO object detection algorithm to calculate the posit
 
     - **AnnotatedImage**: This output is the input image with bounding boxes and annotations drawn on detected objects. Example:
     
-    ![YOLO Detection](Yolodetection.png)
+    ![yolodetectionimage](yolodetectionimage.png)
 
     - **BBoxDimensions**: This output provides the dimensions of the bounding boxes around detected objects.
     - **CamCoordinates**: This output provides the coordinates of detected objects in the camera frame.
