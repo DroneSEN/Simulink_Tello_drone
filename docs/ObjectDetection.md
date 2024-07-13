@@ -44,7 +44,8 @@ This document is dedicated to the Yolo Object Detection system.
     \begin{pmatrix}
     X\\
     Y\\
-    Z
+    Z\\
+    1
     \end{pmatrix}
     $$
 
@@ -55,7 +56,8 @@ This document is dedicated to the Yolo Object Detection system.
     \begin{pmatrix}
     X\\
     Y\\
-    Z
+    Z\\
+    1
     \end{pmatrix}
     $$
 
