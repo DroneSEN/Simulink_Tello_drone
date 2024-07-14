@@ -16,13 +16,11 @@ This Simulink block manages various control aspects of the Tello drone, includin
 
     **Steps to connect the drone :** 
 
-        - Connect the computer to the Tello drone Wifi
+    - Connect the computer to the Tello drone Wifi
     ![wificonnectiontello](wificonnectiontello.png)
-        - Enter the IP of the drone or `127.0.0.1` 
+    - Enter the IP of the drone or `127.0.0.1` 
     ![inputtellocontrol](inputtellocontrol.png)
-        - Run the Simulink 
-
-
+    - Run the Simulink 
     The first step is to enter the IP adress of the drone our this one to connect automaticaly to the drone connected to the wifi 
 
 2. **Detailed View of the Simulink Block for Tello Drone Control:**
@@ -52,14 +50,6 @@ This Simulink block manages various control aspects of the Tello drone, includin
     ![Low-Pass Filter](lowpassfilter_tellocontrol.png)
 
     The low-pass filter processes the RC command inputs to smooth out the control signals. This helps in reducing noise and ensuring stable control.
-
-4. **Integration with the Tello Drone:**
-
-    The Simulink block integrates seamlessly with the Tello drone, allowing for real-time control and monitoring. It processes various control commands and telemetry data, providing a robust platform for drone operations.
-
-5. **Telemetry Data Processing:**
-
-    The block outputs various telemetry data points, including battery level, Euler angles, and speed. This data is crucial for monitoring the drone's status and ensuring safe operations.
 
 ## Conclusion
 
