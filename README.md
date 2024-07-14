@@ -47,7 +47,7 @@ Open ryze.m
 ```
 2. Copy and past our code into it by open this program 
 ```matlab
-run('Simulink_Tello_drone-main/ryze.m').
+Simulink_Tello_drone-main/ryze.m
 ```
 
 ## Tello Drone Control on Simulink
