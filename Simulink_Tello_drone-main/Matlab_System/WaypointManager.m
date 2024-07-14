@@ -32,7 +32,7 @@ classdef WaypointManager < matlab.System
             % Perform one-time calculations, such as computing constants
         end
 
-        function [waypoint, finished, elapsedTimeWaypoint] = stepImpl(obj,enable, lookaheadDistance, currentPos, waypoints, numWaypoints, forceNextWaypoint, requiredTime, time)
+        function [waypoint, finished, elapsedTimeWaypoint] = stepImpl(obj,enable, acceptableDistance, currentPos, waypoints, numWaypoints, forceNextWaypoint, requiredTime, time)
 
             % On calcule le temps de cycle
             sampleTime = time - obj.PreviousTime;
@@ -44,7 +44,7 @@ classdef WaypointManager < matlab.System
                 obj.Finished = 0;
                 
                 % Si la distance est acceptable on incrémente le compteur
-                if (errorPos <= lookaheadDistance)
+                if (errorPos <= acceptableDistance)
                     
                     % On incrémente le temps passé sur le waypoint
                     obj.ElapsedTimeWaypoint = obj.ElapsedTimeWaypoint + sampleTime;
