@@ -120,11 +120,13 @@ Where:
 
 Using Aruco markers, the drone's initial position is accurately estimated after takeoff, compensating for SLAM limitations during sudden speed changes. The process involves capturing images, applying thresholding, detecting squares, validating markers, and computing positions.
 
-More information available on this system in [this document 📄](docs/ArucoMarker.md).
+More information available about this system in [**this document 📄**](docs/ArucoPositionEstimation.md)
 
 ## Waypoint Manager and Control of Tello
 
-The waypoint manager is responsible for planning and executing flight paths. 
+The WaypointManager system manages the navigation of a drone through a series of waypoints. It tracks the drone's current position, determines the appropriate waypoint to navigate towards, and handles transitions between waypoints based on proximity and time spent at each waypoint.
+
+More information available about this system in [**this document 📄**](docs/Waypoints.md)
 
 ## Bibliography
 
