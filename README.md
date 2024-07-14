@@ -61,6 +61,7 @@ flowchart LR
     C{Global map} --> D[Path Planning]
     D[Path Planning] --> E[Control]
 ```
+More information available on the Tellocontrol system in [this document](docs/Tellocontrol.md).
 
 ## SLAM (Simultaneous Localization and Mapping) on Simulink with Tello
 
