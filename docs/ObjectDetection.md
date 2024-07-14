@@ -8,11 +8,11 @@ This project utilizes the YOLO object detection algorithm to calculate the posit
 
 ### YOLO Block
 
-![YOLO Simulink Part](YOLO_Simulinkpart.png)
+![YOLO Simulink Part](figures/object_detection/YOLO_Simulinkpart.png)
 
 1. **Overview of the Process and Goals:**
 
-    ![Process Schema YOLO](processshemayolo.png)
+    ![Process Schema YOLO](figures/object_detection/processshemayolo.png)
 
     Our system calculates the position of objects in the Optitrack referential and maps them into a semantic map using the MATLAB code below and a To Workspace block as output:
     
@@ -22,7 +22,7 @@ This project utilizes the YOLO object detection algorithm to calculate the posit
 
 2. **Detailed View of the MATLAB System Block for YOLO:**
 
-    ![YOLO Block](Yolo_block.png)
+    ![YOLO Block](figures/object_detection/Yolo_block.png)
 
     **Inputs:**
 
@@ -37,11 +37,11 @@ This project utilizes the YOLO object detection algorithm to calculate the posit
 
     - **Tform_camtodrone**: This output provides the transformation matrix that converts coordinates from the front camera frame to the drone frame. The image below shows the camera referential in grey, the UAV referential in red, and the transformation into the Optitrack referential, which is done after the YOLO block.
     
-    ![Referential Drone](Refdrone.png)
+    ![Referential Drone](figures/object_detection/Refdrone.png)
 
     - **AnnotatedImage**: This output is the input image with bounding boxes and annotations drawn on detected objects. Example:
     
-    ![YOLO Detection Image](yolodetectionimage.png)
+    ![YOLO Detection Image](figures/object_detection/yolodetectionimage.png)
 
     - **BBoxDimensions**: This output provides the dimensions of the bounding boxes around detected objects.
     - **CamCoordinates**: This output provides the coordinates of detected objects in the camera frame.
@@ -71,7 +71,7 @@ This project utilizes the YOLO object detection algorithm to calculate the posit
 
 3. **Transformation to Optitrack Referential:**
 
-    ![Output YOLO Transform to Optitrack](output_yolo_tformtoopti.png)
+    ![Output YOLO Transform to Optitrack](figures/object_detection/output_yolo_tformtoopti.png)
 
     We multiply the position of the detected object in the UAV referential (4x1) with the TFORM UAV to Optitrack.
 
@@ -88,4 +88,4 @@ This project utilizes the YOLO object detection algorithm to calculate the posit
 
     To visualize this, we use `plot3` and `scatter` functions in MATLAB.
 
-    ![Semantic Map](semantic.png)
+    ![Semantic Map](figures/object_detection/semantic.png)
