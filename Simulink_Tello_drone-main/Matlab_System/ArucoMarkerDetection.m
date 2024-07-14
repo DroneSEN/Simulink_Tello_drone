@@ -32,7 +32,7 @@ classdef ArucoMarkerDetection < matlab.System & matlab.system.mixin.Propagates
             obj.previousValidEulerAngles = zeros(obj.maxMarkers, 3);    
         end
         
-        function [outputImage, camera_pos_ref_aruco, eulerAngles, detection] = stepImpl(obj, I)
+        function [output_image, camera_pos_ref_aruco, euler_angles, detection] = stepImpl(obj, I)
             % I : image d'entrée
 
             % Correction de la rotation et mirroir
@@ -45,10 +45,10 @@ classdef ArucoMarkerDetection < matlab.System & matlab.system.mixin.Propagates
             [ids, locs, poses] = readArucoMarker(I, obj.markerFamily, obj.intrinsics, obj.markerSizeInMM);
 
             % Initialisation des variables de sortie
-            outputImage = I;
+            output_image = I;
 
             cameraPositions = NaN(obj.maxMarkers, 3); % Positions de la caméra
-            eulerAngles = NaN(obj.maxMarkers, 3); % Angles d'Euler
+            euler_angles = NaN(obj.maxMarkers, 3); % Angles d'Euler
             
             % Points pour le système de coordonnées de l'objet
             worldPoints = [0 0 0; obj.markerSizeInMM/2 0 0; 0 obj.markerSizeInMM/2 0; 0 0 obj.markerSizeInMM/2];
@@ -71,14 +71,14 @@ classdef ArucoMarkerDetection < matlab.System & matlab.system.mixin.Propagates
                               imagePoints(1,:) imagePoints(4,:)];
                 
                 % Dessin des axes colorés sur l'image
-                outputImage = insertShape(outputImage, "Line", axesPoints, ...
+                output_image = insertShape(output_image, "Line", axesPoints, ...
                     'Color', ["red","green","blue"], 'LineWidth', 10);
                 
                 % Calcul de la position de la caméra par rapport au marqueur
                 cameraPositions(i, :) = -poses(i).Rotation' * poses(i).Translation';
                 
                 % Calcul des angles d'Euler à partir de la matrice de rotation
-                eulerAngles(i, :) = rotm2eul(poses(i).Rotation, 'ZYX');
+                euler_angles(i, :) = rotm2eul(poses(i).Rotation, 'ZYX');
             end
             
             % Conversion des positions de la caméra en mètres
@@ -90,10 +90,10 @@ classdef ArucoMarkerDetection < matlab.System & matlab.system.mixin.Propagates
             % Remplir les emplacements non utilisés avec des zéros
             for i = (length(poses)+1):obj.maxMarkers
                 camera_pos_ref_aruco(i, :) = [0, 0, 0];
-                eulerAngles(i, :) = [0, 0, 0];
+                euler_angles(i, :) = [0, 0, 0];
             end
 
-            outputImage = uint8(outputImage);
+            output_image = uint8(output_image);
 
             % Validation des données
             if length(poses) >= 1
@@ -102,14 +102,14 @@ classdef ArucoMarkerDetection < matlab.System & matlab.system.mixin.Propagates
 
                 % On actualise les valeurs précédentes
                 obj.previousValidPos = camera_pos_ref_aruco;
-                obj.previousValidEulerAngles = eulerAngles;
+                obj.previousValidEulerAngles = euler_angles;
             else
                 % Sinon, on désactive le flag
                 detection = 0;
 
                 % On retourne les valeurs précédentes
                 camera_pos_ref_aruco = obj.previousValidPos;
-                eulerAngles = obj.previousValidEulerAngles;
+                euler_angles = obj.previousValidEulerAngles;
             end
         end
         
@@ -117,35 +117,35 @@ classdef ArucoMarkerDetection < matlab.System & matlab.system.mixin.Propagates
             % Initialiser / réinitialiser les propriétés discrètes
         end
         
-        function [outputImage, camera_pos_ref_aruco, eulerAngles, detection] = getOutputSizeImpl(obj)
+        function [output_image, camera_pos_ref_aruco, euler_angles, detection] = getOutputSizeImpl(obj)
             % Retourner la taille de chaque port de sortie
-            outputImage = [ obj.imageSize(2), obj.imageSize(1), 3];
+            output_image = [ obj.imageSize(2), obj.imageSize(1), 3];
             camera_pos_ref_aruco = [obj.maxMarkers, 3];  % Taille fixe pour les positions
-            eulerAngles = [obj.maxMarkers, 3];  % Taille fixe pour les angles d'Euler
+            euler_angles = [obj.maxMarkers, 3];  % Taille fixe pour les angles d'Euler
             detection = [1,1];
         end
         
-        function [outputImage, camera_pos_ref_aruco, eulerAngles, detection] = getOutputDataTypeImpl(~)
+        function [output_image, camera_pos_ref_aruco, euler_angles, detection] = getOutputDataTypeImpl(~)
             % Retourner le type de données de chaque port de sortie
-            outputImage = 'uint8';
+            output_image = 'uint8';
             camera_pos_ref_aruco = 'double';
-            eulerAngles = 'double';
+            euler_angles = 'double';
             detection = 'double';
         end
         
-        function [outputImage, camera_pos_ref_aruco, eulerAngles, detection] = isOutputComplexImpl(~)
+        function [output_image, camera_pos_ref_aruco, euler_angles, detection] = isOutputComplexImpl(~)
             % Retourner vrai pour chaque port de sortie avec des données complexes
-            outputImage = false;
+            output_image = false;
             camera_pos_ref_aruco = false;
-            eulerAngles = false;
+            euler_angles = false;
             detection = false;
         end
         
-        function [outputImage, camera_pos_ref_aruco, eulerAngles, detection] = isOutputFixedSizeImpl(~)
+        function [output_image, camera_pos_ref_aruco, euler_angles, detection] = isOutputFixedSizeImpl(~)
             % Retourner vrai pour chaque port de sortie avec une taille fixe
-            outputImage = true;
+            output_image = true;
             camera_pos_ref_aruco = true;  % Taille fixe pour les positions
-            eulerAngles = true;  % Taille fixe pour les angles d'Euler
+            euler_angles = true;  % Taille fixe pour les angles d'Euler
             detection = true;
         end
     end
