@@ -6,7 +6,7 @@
 2. [Materials Used](#materials-used)
 3. [Modified Tello Matlab Library](#modified-tello-matlab-library)
 4. [Tello Drone Control on Simulink](#tello-drone-control-on-simulink)
-5. [SLAM (Simultaneous Localization and Mapping) on Simulink with Tello](#slam-on-simulink-with-tello)
+5. [SLAM (Simultaneous Localization and Mapping) on Simulink with Tello](#SLAM-(Simultaneous-Localization-and-Mapping)-on-Simulink-with-Tello)
 6. [Optitrack Setup](#optitrack-setup)
 7. [Drone Positioning with YOLO and Semantic Mapping with YOLO](#drone-positioning-with-yolo-and-Semantic-Mapping-with-YOLO)
 8. [Camera Calibration with Matlab](#camera-calibration-with-matlab)
