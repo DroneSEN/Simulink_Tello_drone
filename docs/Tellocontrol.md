@@ -17,10 +17,15 @@ This Simulink block manages various control aspects of the Tello drone, includin
     **Steps to connect the drone :** 
 
     - Connect the computer to the Tello drone Wifi
+
     ![wificonnectiontello](wificonnectiontello.png)
+
     - Enter the IP of the drone or `127.0.0.1` 
+
     ![inputtellocontrol](inputtellocontrol.png)
+
     - Run the Simulink 
+    
     The first step is to enter the IP adress of the drone our this one to connect automaticaly to the drone connected to the wifi 
 
 2. **Detailed View of the Simulink Block for Tello Drone Control:**
