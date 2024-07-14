@@ -133,7 +133,7 @@ Once the position of the drone in the Aruco target referential is computed, it i
 
 ![Post processing](figures/aruco/aruco_post_processing.png)
 
-This system takes as input the position and rotation of the Aruco target in the global referential.
+This system takes as input the position and rotation of the Aruco target in the global referential and outputs the drone position in the Optitrack referential.
 
 ## References
 
