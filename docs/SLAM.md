@@ -4,7 +4,7 @@ MonoVSLAM in MATLAB is a powerful tool for creating 3D maps and tracking camera 
 
 ## Simulink Block
 
-![SLAM Simulink Part](SLAM_simulinkpart.png)
+![SLAM Simulink Part](figures/slam/SLAM_simulinkpart.png)
 
 ### Managing MonoVSLAM
 
@@ -27,7 +27,7 @@ MonoVSLAM in MATLAB is a powerful tool for creating 3D maps and tracking camera 
 
 2. **Input:**
 
-    ![SLAM1](SLAM1.png)
+    ![SLAM1](figures/slam/SLAM1.png)
 
     You need to enter the intrinsic parameters of the camera and the size of the image:
 
@@ -60,7 +60,7 @@ MonoVSLAM in MATLAB is a powerful tool for creating 3D maps and tracking camera 
 
     The SLAM block provides two outputs:
 
-    ![Output SLAM](outputslam.png)
+    ![Output SLAM](figures/slam/outputslam.png)
 
     - **CameraPose**: The position of the drone in the SLAM referential, represented as a Homogeneous Transformation (TForm) matrix [4x4].
     - **TrackingLost**: Indicates the state of the SLAM. Possible values:
@@ -70,14 +70,14 @@ MonoVSLAM in MATLAB is a powerful tool for creating 3D maps and tracking camera 
 
     **How to Obtain Translation and Rotation Matrices:**
 
-    ![Tform Output SLAM](Tformoutputslam.png)
+    ![Tform Output SLAM](figures/slam/Tformoutputslam.png)
 
     We use the block `Coordinate Transformation Conversion`.
 
     **Transforming from SLAM Referential to Optitrack Referential:**
 
-    ![Permutation SLAM](permutationslam.png)
+    ![Permutation SLAM](figures/slam/permutationslam.png)
 
     We use `mux` and `demux` to permute the axes and also a gain to account for the scale factor between the SLAM position and the true position.
 
-    The SLAM position in the referential is sent to the workspace using a `To Workspace` block and used by the semantic map to map it. For more details, see the [Object Detection documentation](docs/ObjectDetection.md).
+    The SLAM position in the referential is sent to the workspace using a `To Workspace` block and used by the semantic map to map it. For more details, see the [Object Detection documentation](ObjectDetection.md).
