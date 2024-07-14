@@ -2,17 +2,19 @@
 
 ## Table of Contents
 
-1. [Setup the Project](#setup-the-project)
-2. [Materials Used](#materials-used)
-3. [Modified Tello Matlab Library](#modified-tello-matlab-library)
-4. [Tello Drone Control on Simulink](#tello-drone-control-on-simulink)
-5. [SLAM (Simultaneous Localization and Mapping) on Simulink with Tello](#SLAM-(Simultaneous-Localization-and-Mapping)-on-Simulink-with-Tello)
-6. [Optitrack Setup](#optitrack-setup)
-7. [Drone Positioning with YOLO and Semantic Mapping with YOLO](#drone-positioning-with-yolo-and-Semantic-Mapping-with-YOLO)
-8. [Camera Calibration with Matlab](#camera-calibration-with-matlab)
-9. [Aruco Positioning with Tello's Down Camera](#aruco-positioning-with-tellos-down-camera)
-10. [Waypoint Manager and Control of Tello](#waypoint-manager-and-control-of-tello)
-11. [Bibliography](#bibliography)
+- [Tello Edu Control Software on Simulink](#tello-edu-control-software-on-simulink)
+  - [Table of Contents](#table-of-contents)
+  - [Setup the Project](#setup-the-project)
+  - [Materials Used](#materials-used)
+  - [Modified Tello Matlab Library](#modified-tello-matlab-library)
+  - [Tello Drone Control on Simulink](#tello-drone-control-on-simulink)
+  - [SLAM (Simultaneous Localization and Mapping) on Simulink with Tello](#slam-simultaneous-localization-and-mapping-on-simulink-with-tello)
+  - [Optitrack setup](#optitrack-setup)
+  - [Drone Positioning with YOLO and Semantic Mapping with YOLO](#drone-positioning-with-yolo-and-semantic-mapping-with-yolo)
+  - [Camera Calibration with Matlab](#camera-calibration-with-matlab)
+  - [Aruco Positioning with Tello's Down Camera](#aruco-positioning-with-tellos-down-camera)
+  - [Waypoint Manager and Control of Tello](#waypoint-manager-and-control-of-tello)
+  - [Bibliography](#bibliography)
 
 ## Setup the Project
 
@@ -116,7 +118,9 @@ Where:
 
 ## Aruco Positioning with Tello's Down Camera
 
-Aruco markers are used for precise positioning during takeoff. 
+Using Aruco markers, the drone's initial position is accurately estimated after takeoff, compensating for SLAM limitations during sudden speed changes. The process involves capturing images, applying thresholding, detecting squares, validating markers, and computing positions.
+
+More information available on this system in [this document 📄](docs/ArucoMarker.md).
 
 ## Waypoint Manager and Control of Tello
 
