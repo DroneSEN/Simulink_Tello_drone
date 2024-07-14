@@ -68,7 +68,7 @@ flowchart LR
 
 **Projet files**
 - `Matlab_System\ArucoMarkerDetection.m` : Contains the Aruco marker logic
-- `Simulink_Part\Aruco_Follower.slx` : User interface to control the drone using the position data computed via Aruco target
+- `Simulink_Part\ArucoPositionEstimation.slx` : User interface to control the drone using the position data computed via Aruco target
 
 ![Aruco marker detection system on Simulink](figures/aruco/aruco_detection_simulink.png)
 
