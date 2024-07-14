@@ -8,7 +8,7 @@ This Simulink block manages various control aspects of the Tello drone, includin
 
 ### Simulink Block Diagram
 
-![Tello Drone Control Simulink Part](Tellocontrolsimulink_part.png)
+![Tello Drone Control Simulink Part](figures/tello_control/Tellocontrolsimulink_part.png)
 
 1. **Overview of the Process and Goals:**
 
@@ -18,11 +18,11 @@ This Simulink block manages various control aspects of the Tello drone, includin
 
     - Connect the computer to the Tello drone Wifi
 
-    ![wificonnectiontello](wificonnectiontello.png)
+    ![wificonnectiontello](figures/tello_control/wificonnectiontello.png)
 
     - Enter the IP of the drone or `127.0.0.1` 
 
-    ![inputtellocontrol](inputtellocontrol.png)
+    ![inputtellocontrol](figures/tello_control/inputtellocontrol.png)
 
     - Run the Simulink 
     
@@ -52,7 +52,7 @@ This Simulink block manages various control aspects of the Tello drone, includin
 
 3. **Low-Pass Filter for RC Commands:**
 
-    ![Low-Pass Filter](lowpassfilter_tellocontrol.png)
+    ![Low-Pass Filter](figures/tello_control/lowpassfilter_tellocontrol.png)
 
     The low-pass filter processes the RC command inputs to smooth out the control signals. This helps in reducing noise and ensuring stable control.
 
